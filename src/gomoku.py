@@ -1,4 +1,4 @@
-from game_board import Markers, GameBoard
+from game_board import GameBoard, Markers
 import random
 
 
@@ -18,7 +18,7 @@ class Gomoku:
                 print(f"Invalid input, X and Y must be between 0 and {self.gameboard.size - 1}")
                 continue
             self.__update_valid_moves(col, row)
-            if self.gameboard.is_win_state():
+            if self.gameboard.win_state():
                 print("Player won!")
                 print(self.gameboard)
                 break

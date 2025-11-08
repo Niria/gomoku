@@ -40,7 +40,7 @@ class GameBoard:
             col, row = self.move_history.pop()
             self.board[row][col] = 0
 
-    def is_win_state(self):
+    def win_state(self):
         move_col, move_row = self.move_history[-1]
         marker = self.board[move_row][move_col]
 
