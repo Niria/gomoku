@@ -1,5 +1,5 @@
-from game_board import GameBoard, Markers
-import random
+from game_board import GameBoard
+from algorithms import find_ai_move
 
 
 class Gomoku:
@@ -17,16 +17,20 @@ class Gomoku:
                     break
 
                 col, row = [int(n) for n in user_input.split(" ")]
-                valid_move = self.__player_move(col, row)
 
-                if not valid_move:
+                if not self.gameboard.valid_move(col, row):
                     print(f"Invalid input, X and Y must be between 0 and {self.gameboard.size - 1}")
                     continue
 
-            else:
-                col, row = random.choice(self.valid_moves)
-                self.__ai_move(col, row)
+                self.current_value += self.gameboard.get_move_value(col, row, self.players_turn)
 
+                print(f"curr value: {self.current_value}")
+
+                self.gameboard.move(col, row, self.players_turn)
+            else:
+                # col, row = random.choice(self.valid_moves)
+                col, row = find_ai_move(self.gameboard, self.valid_moves, self.current_value)
+                self.gameboard.move(col, row, self.players_turn)
             if self.gameboard.win_state():
                 if self.players_turn:
                     print("Player won!")
@@ -35,26 +39,9 @@ class Gomoku:
                 print(self.gameboard)
                 break
 
-            self.__update_valid_moves(col, row)
+            self.valid_moves = self.gameboard.get_valid_moves(self.valid_moves, col, row)
+
             if not self.players_turn:
                 print(self.gameboard)
             self.players_turn = not self.players_turn
-
-    def __update_valid_moves(self, col, row):
-        if (col, row) in self.valid_moves:
-            self.valid_moves.remove((col, row))
-
-        for x in range (col-2, col+3):
-            for y in range (row-2, row+3):
-                if x == col and y == row:
-                    continue
-                if self.gameboard.valid_coordinate(x, y) and self.gameboard.empty_space(x, y):
-                    self.valid_moves.append((x, y))
-
-    def __player_move(self, col, row):
-        return self.gameboard.move(col, row, Markers.PLAYER)
-
-    def __ai_move(self, col, row):
-        return self.gameboard.move(col, row, Markers.AI)
-
-
+            print(self.gameboard.move_history)

@@ -14,22 +14,25 @@ class GameBoard:
         Markers.AI: "O"
     }
 
-    WIN_VALUE = 100
-
     VALUES = {
-        "11111": 100,
-        "011110": 80,
-        "011112": 40,
-        "211110": 40,
-        "10111": 40,
-        "11011": 40,
-        "11101": 40,
-        "01110": 25,
-        "01011": 25,
-        "01101": 25,
-        "01010": 10,
-        "01100": 10,
-        "00110": 10
+        "11111": 10000,
+        "011110": 5000,
+        "011112": 3000,
+        "211110": 3000,
+        "10111": 500,
+        "11011": 500,
+        "11101": 500,
+        "01110": 200,
+        "01011": 200,
+        "01101": 200,
+        "21110": 100,
+        "01112": 100,
+        "01010": 50,
+        "01100": 50,
+        "00110": 50,
+        "00100": 20,
+        "01": 10,
+        "10": 10
     }
 
     def __init__(self, size):
@@ -45,13 +48,10 @@ class GameBoard:
             board += "\n"
         return board
 
-    def move(self, col, row, marker):
-        if self.valid_coordinate(col, row) and self.empty_space(col, row):
-            self.board[row][col] = marker
-            self.move_history.append((col, row))
-            return True
-        else:
-            return False
+    def move(self, col, row, players_turn):
+        self.board[row][col] = Markers.PLAYER if players_turn else Markers.AI
+        self.move_history.append((col, row))
+
 
     def undo_move(self):
         if self.move_history:
@@ -62,9 +62,20 @@ class GameBoard:
         rows = self.get_rows_containing_move(*self.move_history[-1])
 
         for row in rows:
-            if abs(self.get_row_value(row)) == self.WIN_VALUE:
+            if abs(self.get_row_value(row)) == self.VALUES["11111"]:
                 return True
         return False
+
+    def get_move_value(self, col, row, players_turn):
+        rows = self.get_rows_containing_move(col, row)
+        current_value = sum(self.get_row_value(r) for r in rows)
+
+        self.board[row][col] = Markers.PLAYER if players_turn else Markers.AI
+        rows = self.get_rows_containing_move(col, row)
+        new_value = sum(self.get_row_value(r) for r in rows)
+        self.board[row][col] = Markers.EMPTY
+
+        return new_value - current_value
 
     def get_rows_containing_move(self, col, row):
         directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
@@ -72,45 +83,35 @@ class GameBoard:
         move_col, move_row = col, row
 
         for dx, dy in directions:
-            current_row = ""
+            current_row = []
             for i in range(-4, 5):
                 col = move_col + i*dx
                 row = move_row + i*dy
                 if not self.valid_coordinate(col, row):
                     continue
-                current_row += str(self.board[row][col])
+                current_row.append(self.board[row][col])
             rows.append(current_row)
         return rows
 
-    def get_children(self):
-        pass
-
-    def get_move_value(self, col, row, marker):
-        rows = self.get_rows_containing_move(col, row)
-        current_value = sum(self.get_row_value(row) for row in rows)
-
-        self.board[row][col] = marker
-        new_value = sum(self.get_row_value(row) for row in rows)
-        self.board[row][col] = Markers.EMPTY
-
-        return new_value - current_value
-
     def get_row_value(self, row):
+        row = "".join(str(n) for n in row)
         flip = {"0": "0", "1": "2", "2": "1"}
-        human_value = 0
+        player_value = 0
         ai_value = 0
         flipped_row = "".join([flip[c] for c in row])
-
         for pattern, value in self.VALUES.items():
             if pattern in row:
-                human_value = -value
+                player_value = value
                 break
+
+        for pattern, value in self.VALUES.items():
             if pattern in flipped_row:
                 ai_value = value
                 break
+        return ai_value - player_value
 
-        return ai_value - human_value
-
+    def valid_move(self, col, row):
+        return self.valid_coordinate(col, row) and self.empty_space(col, row)
 
     def valid_coordinate(self, col, row):
         if col < 0 or col >= self.size or row < 0 or row >= self.size:
@@ -120,3 +121,14 @@ class GameBoard:
     def empty_space(self, col, row):
         return self.board[row][col] == 0
 
+    def get_valid_moves(self, curr_valid_moves, col, row):
+        valid_moves = curr_valid_moves.copy()
+        if (col, row) in valid_moves:
+            valid_moves.remove((col, row))
+        for x in range (col-2, col+3):
+            for y in range (row-2, row+3):
+                if x == col and y == row:
+                    continue
+                if self.valid_coordinate(x, y) and self.empty_space(x, y) and (x, y) not in valid_moves:
+                    valid_moves.append((x, y))
+        return valid_moves
