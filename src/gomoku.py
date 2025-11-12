@@ -1,13 +1,18 @@
-from game_board import GameBoard
-from algorithms import find_ai_move
+from game_board import GameBoard, Markers
+from gomoku_ai import GomokuAI
+from helpers import generate_zobrist_table
 
 
 class Gomoku:
     def __init__(self, size=20):
         self.gameboard = GameBoard(size)
+        self.ai = GomokuAI(size)
         self.players_turn = True
         self.current_value = 0
         self.valid_moves = []
+
+        self.zobrist_table = generate_zobrist_table(size)
+        self.gameboard_values = {}
 
     def run(self):
         while True:
@@ -22,15 +27,20 @@ class Gomoku:
                     print(f"Invalid input, X and Y must be between 0 and {self.gameboard.size - 1}")
                     continue
 
-                self.current_value += self.gameboard.get_move_value(col, row, self.players_turn)
+                self.current_value += self.gameboard.get_move_value(col, row, Markers.PLAYER)
 
                 print(f"curr value: {self.current_value}")
 
-                self.gameboard.move(col, row, self.players_turn)
+                self.gameboard.move(col, row, Markers.PLAYER)
+                self.ai.update_hash(col, row, Markers.PLAYER)
+
             else:
                 # col, row = random.choice(self.valid_moves)
-                col, row = find_ai_move(self.gameboard, self.valid_moves, self.current_value)
-                self.gameboard.move(col, row, self.players_turn)
+                col, row = self.ai.find_ai_move(self.gameboard, self.valid_moves, self.current_value)
+                self.current_value += self.gameboard.get_move_value(col, row, Markers.AI)
+                self.gameboard.move(col, row, Markers.AI)
+                self.ai.update_hash(col, row, Markers.AI)
+
             if self.gameboard.win_state():
                 if self.players_turn:
                     print("Player won!")
