@@ -142,17 +142,3 @@ class GameBoard:
             new_moves.append((move_col, move_row))
 
         return new_moves + valid_moves
-
-
-
-    # def get_valid_moves(self, curr_valid_moves, col, row):
-    #     valid_moves = curr_valid_moves.copy()
-    #     if (col, row) in valid_moves:
-    #         valid_moves.remove((col, row))
-    #     for x in range (col-2, col+3):
-    #         for y in range (row-2, row+3):
-    #             if x == col and y == row:
-    #                 continue
-    #             if self.valid_coordinate(x, y) and self.empty_space(x, y) and (x, y) not in valid_moves:
-    #                 valid_moves.append((x, y))
-    #     return valid_moves
