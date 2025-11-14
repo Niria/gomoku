@@ -1,5 +1,4 @@
 from random import getrandbits
-from game_board import Markers
 
 def function_call_counter(func):
     def wrapper(*args, **kwargs):

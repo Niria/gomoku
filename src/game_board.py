@@ -1,4 +1,6 @@
 from enum import IntEnum
+from helpers import generate_zobrist_table
+
 
 class Markers(IntEnum):
     EMPTY = 0
@@ -10,7 +12,7 @@ class GameBoard:
     SYMBOLS = {
         Markers.EMPTY: ".",
         Markers.PLAYER: "X",
-        Markers.AI: "O"
+        Markers.AI: "O",
     }
 
     VALUES = {
@@ -41,6 +43,8 @@ class GameBoard:
         self.size = size
         self.board = [[Markers.EMPTY for _ in range(size)] for _ in range(size)]
         self.move_history = []
+        self.zobrist_hash = 0
+        self.zobrist_table = generate_zobrist_table(size)
 
     def __str__(self):
         board = ""
@@ -53,10 +57,14 @@ class GameBoard:
     def move(self, col, row, marker):
         self.board[row][col] = marker
         self.move_history.append((col, row))
+        self.update_hash(col, row, marker)
 
     def undo_move(self):
         if self.move_history:
-            col, row = self.move_history.pop()
+            col, row = self.move_history[-1]
+            marker = self.board[row][col]
+            self.move_history.pop()
+            self.update_hash(col, row, marker)
             self.board[row][col] = Markers.EMPTY
 
     def win_state(self):
@@ -142,3 +150,6 @@ class GameBoard:
             new_moves.append((move_col, move_row))
 
         return new_moves + valid_moves
+
+    def update_hash(self, col, row, marker):
+        self.zobrist_hash ^= self.zobrist_table[row][col][marker]
