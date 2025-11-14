@@ -17,3 +17,6 @@ def generate_zobrist_table(size):
                 table[col][row][marker] = getrandbits(64)
 
     return table
+
+def char_to_number(char):
+    return ord(char.lower()) - ord('a')

@@ -9,31 +9,31 @@ class Markers(IntEnum):
 
 
 class GameBoard:
+    VALUES = {
+        "11111": 10000000,
+        "011110": 1000000,
+        "011112": 100000,
+        "211110": 100000,
+        "10111": 10000,
+        "11011": 10000,
+        "11101": 10000,
+        "01110": 1000,
+        "01011": 500,
+        "01101": 500,
+        "21110": 100,
+        "01112": 100,
+        "11000": 50,
+        "01100": 50,
+        "00110": 50,
+        "00011": 50,
+        "00100": 10,
+    }
     SYMBOLS = {
         Markers.EMPTY: ".",
         Markers.PLAYER: "X",
         Markers.AI: "O",
     }
 
-    VALUES = {
-        "11111": 100000,
-        "011110": 50000,
-        "011112": 5000,
-        "211110": 5000,
-        "10111": 1000,
-        "11011": 1000,
-        "11101": 1000,
-        "01110": 200,
-        "01011": 200,
-        "01101": 200,
-        "21110": 100,
-        "01112": 100,
-        "01010": 50,
-        "01100": 50,
-        "00110": 50,
-        "00100": 20,
-        "1": 1
-    }
 
     VALID_MOVE_POSITIONS = [(-1,-1), (1,-1), (-1,1), (1,1), (0,-1), (-1,0), (1,0), (0,1),
                             (-2,-2), (2,-2), (-2,2), (2,2), (0,-2), (-2,0), (2,0), (0,2)]
@@ -46,9 +46,12 @@ class GameBoard:
         self.zobrist_table = generate_zobrist_table(size)
 
     def __str__(self):
-        board = ""
-        for row in self.board:
-            for pos in row:
+        board = "    "
+        board += " ".join([chr(n) for n in range(65,85)])
+        board += "\n"
+        for i,row in enumerate(self.board):
+            board += f"{i:3} "
+            for j,pos in enumerate(row):
                 board += self.SYMBOLS[pos] + " "
             board += "\n"
         return board
@@ -67,7 +70,10 @@ class GameBoard:
             self.board[row][col] = Markers.EMPTY
 
     def win_state(self):
-        rows = self.get_rows_containing_move(*self.move_history[-1])
+        if not self.move_history:
+            return False
+        col, row = self.move_history[-1]
+        rows = self.get_rows_containing_move(col, row)
 
         for row in rows:
             if abs(self.get_row_value(row)) == self.VALUES["11111"]:
@@ -130,6 +136,7 @@ class GameBoard:
     def empty_space(self, col, row):
         return self.board[row][col] == Markers.EMPTY
 
+    # Old spatial move ordering based on previous move
     def get_valid_moves(self, curr_valid_moves, col, row):
         valid_moves = curr_valid_moves.copy()
         new_moves = []
@@ -149,7 +156,8 @@ class GameBoard:
             new_moves.append((move_col, move_row))
 
         return new_moves + valid_moves
-    
+
+    # New value based move ordering
     def get_valid_moves_set(self, valid_moves, col, row):
         new_valid_moves = valid_moves.copy()
         if (col, row) in new_valid_moves:
