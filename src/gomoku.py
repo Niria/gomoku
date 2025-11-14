@@ -9,7 +9,8 @@ class Gomoku:
         self.ai = GomokuAI()
         self.players_turn = True
         self.current_value = 0
-        self.valid_moves = []
+        # self.valid_moves = []
+        self.valid_moves = set()
 
         self.zobrist_table = generate_zobrist_table(size)
         self.gameboard_values = {}
@@ -46,7 +47,8 @@ class Gomoku:
                 print(self.gameboard)
                 break
 
-            self.valid_moves = self.gameboard.get_valid_moves(self.valid_moves, col, row)
+            self.valid_moves = self.gameboard.get_valid_moves_set(self.valid_moves, col, row)
+            # self.valid_moves = self.gameboard.get_valid_moves(self.valid_moves, col, row)
 
             if not self.players_turn:
                 print(self.gameboard)

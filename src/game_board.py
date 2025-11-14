@@ -32,8 +32,7 @@ class GameBoard:
         "01100": 50,
         "00110": 50,
         "00100": 20,
-        "01": 10,
-        "10": 10
+        "1": 1
     }
 
     VALID_MOVE_POSITIONS = [(-1,-1), (1,-1), (-1,1), (1,1), (0,-1), (-1,0), (1,0), (0,1),
@@ -150,6 +149,22 @@ class GameBoard:
             new_moves.append((move_col, move_row))
 
         return new_moves + valid_moves
+    
+    def get_valid_moves_set(self, valid_moves, col, row):
+        new_valid_moves = valid_moves.copy()
+        if (col, row) in new_valid_moves:
+            new_valid_moves.remove((col, row))
+
+        for dx, dy in GameBoard.VALID_MOVE_POSITIONS:
+            move_col = col + dx
+            move_row = row + dy
+
+            if not self.valid_coordinate(move_col, move_row) or not self.empty_space(move_col, move_row):
+                continue
+            new_valid_moves.add((move_col, move_row))
+
+        return new_valid_moves
+
 
     def update_hash(self, col, row, marker):
         self.zobrist_hash ^= self.zobrist_table[row][col][marker]

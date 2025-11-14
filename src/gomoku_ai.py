@@ -1,4 +1,4 @@
-from game_board import Markers
+from game_board import Markers, GameBoard
 from helpers import function_call_counter
 
 
@@ -11,6 +11,7 @@ class GomokuAI:
         self.heatmap = None
         self.duplicates = 0
         self.value_map = None
+        self.prunes = 0
 
 
     def find_ai_move(self, gameboard, valid_moves, current_value, depth=5):
@@ -24,11 +25,15 @@ class GomokuAI:
         self.value_map = [[0 for _ in range(20)] for _ in range(20)]
         GomokuAI.minimax.calls = 0
 
-        for move in valid_moves:
+        sorted_moves = sorted(valid_moves, key=lambda x: gameboard.get_move_value(x[0], x[1], Markers.AI), reverse=True)
+        print(sorted_moves)
+        print(valid_moves)
+
+        for move in sorted_moves:
             col, row = move
             self.heatmap[row][col] += 1
             child_value = current_value + gameboard.get_move_value(col, row, Markers.AI)
-            child_valid_moves = gameboard.get_valid_moves(valid_moves, col, row)
+            child_valid_moves = gameboard.get_valid_moves_set(valid_moves, col, row)
 
             gameboard.move(col, row, Markers.AI)
             minimax_value = self.minimax(gameboard, alpha, beta, False, child_valid_moves, child_value, depth - 1)
@@ -47,8 +52,6 @@ class GomokuAI:
 
             alpha = max(alpha, highest_value)
 
-
-
         board = ""
         for r in self.heatmap:
             for c in r:
@@ -62,9 +65,8 @@ class GomokuAI:
             board += "\n"
         print(board)
 
-        print(f"Total minimax calls: {GomokuAI.minimax.calls}")
-        print(f"duplicates: {self.duplicates}")
-
+        print(f"Total minimax calls: {GomokuAI.minimax.calls}, estimated prunes: {self.prunes}, duplicate boards: {self.duplicates}")
+        print(f"AI chose: {best_move}")
 
         return best_move
 
@@ -79,13 +81,18 @@ class GomokuAI:
 
         marker = Markers.AI if maximizing else Markers.PLAYER
 
+
         if maximizing:
             value = float('-inf')
-            for move in valid_moves:
+            sorted_moves = sorted(valid_moves,
+                                  key=lambda x: gameboard.get_move_value(x[0], x[1], marker),
+                                  reverse=True)
+
+            for move in sorted_moves:
                 col, row = move
                 self.heatmap[row][col] += 1
                 child_value = parent_value + gameboard.get_move_value(col, row, marker)
-                child_valid_moves = gameboard.get_valid_moves(valid_moves, col, row)
+                child_valid_moves = gameboard.get_valid_moves_set(valid_moves, col, row)
 
                 gameboard.move(col, row, marker)
                 value = max(value, self.minimax(gameboard, alpha, beta, False, child_valid_moves, child_value, depth - 1))
@@ -94,6 +101,7 @@ class GomokuAI:
                 alpha = max(alpha, value)
 
                 if alpha >= beta:
+                    self.prunes += len(valid_moves)**(depth-1)
                     # print(f"pruned in max, depth: {depth} alpha: {alpha} beta: {beta}")
                     break
 
@@ -102,11 +110,13 @@ class GomokuAI:
             return value
         else:
             value = float('inf')
-            for move in valid_moves:
+            sorted_moves = sorted(valid_moves, key=lambda x: gameboard.get_move_value(x[0], x[1], marker))
+
+            for move in sorted_moves:
                 col, row = move
                 self.heatmap[row][col] += 1
                 child_value = parent_value + gameboard.get_move_value(col, row, marker)
-                child_valid_moves = gameboard.get_valid_moves(valid_moves, col, row)
+                child_valid_moves = gameboard.get_valid_moves_set(valid_moves, col, row)
 
                 gameboard.move(col, row, marker)
                 value = min(value, self.minimax(gameboard, alpha, beta, True, child_valid_moves, child_value, depth - 1))
@@ -115,6 +125,7 @@ class GomokuAI:
                 beta = min(beta, value)
 
                 if alpha >= beta:
+                    self.prunes += len(valid_moves)**(depth-1)
                     # print(f"pruned in min, depth: {depth} alpha: {alpha} beta: {beta}")
                     break
 
