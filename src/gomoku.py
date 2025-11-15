@@ -1,4 +1,4 @@
-from game_board import GameBoard, Markers
+from game_board import GameBoard, Marker, Move
 from gomoku_ai import GomokuAI
 from helpers import char_to_number
 
@@ -9,11 +9,13 @@ class Gomoku:
         self.ai = GomokuAI()
         self.players_turn = True
         self.current_value = 0
-        self.valid_moves = set()
-        self.move_dict = {}
+        self.valid_moves: set[Move] = set()
 
 
-    def run(self):
+    def run(self) -> None:
+        print(self.gameboard)
+        print()
+
         while True:
             if self.players_turn:
                 user_input = input("X Y: ")
@@ -21,7 +23,6 @@ class Gomoku:
                     break
 
                 try:
-                    # col, row = [int(n) for n in user_input.split(" ")]
                     col, row = user_input.split(" ")
                     col = char_to_number(col)
                     row = int(row)
@@ -32,19 +33,19 @@ class Gomoku:
                 if not self.gameboard.valid_move(col, row):
                     print(f"Invalid input, X and Y must be between 0 and {self.gameboard.size - 1}")
                     continue
-                print(f"al before player: {self.current_value}")
-                self.current_value += self.gameboard.get_move_value(col, row, Markers.PLAYER)
+                print(f"val before player: {self.current_value}")
+                self.current_value += self.gameboard.get_move_value(col, row, Marker.PLAYER)
                 print(f"val after player: {self.current_value}")
                 # print(f"curr value: {self.current_value}")
 
-                self.gameboard.move(col, row, Markers.PLAYER)
+                self.gameboard.move(col, row, Marker.PLAYER)
 
             else:
                 col, row = self.ai.find_ai_move(self.gameboard, self.valid_moves, self.current_value)
                 print(f"val before AI: {self.current_value}")
-                self.current_value += self.gameboard.get_move_value(col, row, Markers.AI)
+                self.current_value += self.gameboard.get_move_value(col, row, Marker.AI)
                 print(f"val after AI: {self.current_value}")
-                self.gameboard.move(col, row, Markers.AI)
+                self.gameboard.move(col, row, Marker.AI)
 
             if self.gameboard.win_state():
                 if self.players_turn:
@@ -59,4 +60,4 @@ class Gomoku:
             if not self.players_turn:
                 print(self.gameboard)
             self.players_turn = not self.players_turn
-            print(self.gameboard.move_history)
+            print(f"history: {self.gameboard.move_history}")

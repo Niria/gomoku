@@ -1,4 +1,4 @@
-from game_board import Markers
+from game_board import GameBoard, Marker, Move
 from helpers import function_call_counter
 
 
@@ -12,22 +12,21 @@ class GomokuAI:
         self.value_map = None
         self.prunes = 0
 
-
-    def find_ai_move(self, gameboard, valid_moves, current_value, depth=5):
+    def find_ai_move(self, gameboard: GameBoard, valid_moves: set[Move], current_value: int, depth: int=5) -> Move:
         self.visited = {}
         best_move = None
         highest_value = float('-inf')
         alpha = float('-inf')
         beta = float('inf')
 
-        self.heatmap = [[0 for _ in range(20)] for _ in range(20)]
-        self.value_map = [[0 for _ in range(20)] for _ in range(20)]
+        self.heatmap = [[0 for _ in range(gameboard.size)] for _ in range(gameboard.size)]
+        self.value_map = [[0 for _ in range(gameboard.size)] for _ in range(gameboard.size)]
         GomokuAI.minimax.calls = 0
 
         sorted_moves = []
         for move in valid_moves:
             col, row = move
-            mv_value = gameboard.get_move_value(col, row, Markers.AI)
+            mv_value = gameboard.get_move_value(col, row, Marker.AI)
             sorted_moves.append((move, mv_value))
             sorted_moves.sort(key=lambda x: x[1], reverse=True)
 
@@ -37,7 +36,7 @@ class GomokuAI:
             child_value = current_value + move_value
             child_valid_moves = gameboard.get_valid_moves_set(valid_moves, col, row)
 
-            gameboard.move(col, row, Markers.AI)
+            gameboard.move(col, row, Marker.AI)
             minimax_value = self.minimax(gameboard, alpha, beta, False, child_valid_moves, child_value, depth - 1)
             gameboard.undo_move()
 
@@ -73,7 +72,7 @@ class GomokuAI:
         return best_move
 
     @function_call_counter
-    def minimax(self, gameboard, alpha, beta, maximizing, valid_moves, parent_value, depth):
+    def minimax(self, gameboard: GameBoard, alpha: float, beta: float, maximizing: bool, valid_moves: set[Move], parent_value: int, depth: int) -> int:
         if gameboard.zobrist_hash in self.visited:
             self.duplicates += 1
             return self.visited[gameboard.zobrist_hash]
@@ -81,7 +80,7 @@ class GomokuAI:
         if depth == 0 or gameboard.win_state():
             return parent_value
 
-        marker = Markers.AI if maximizing else Markers.PLAYER
+        marker = Marker.AI if maximizing else Marker.PLAYER
 
 
         sorted_moves = []

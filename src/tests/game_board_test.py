@@ -1,5 +1,5 @@
 import unittest
-from game_board import GameBoard, Markers
+from game_board import GameBoard, Marker
 
 
 class TestGameBoard(unittest.TestCase):
@@ -16,14 +16,14 @@ class TestGameBoard(unittest.TestCase):
             (self.gameboard.size, self.gameboard.size ),
         ]
         for x, y in moves:
-            self.assertFalse(self.gameboard.move(x, y, Markers.PLAYER))
+            self.assertFalse(self.gameboard.move(x, y, Marker.PLAYER))
 
     def test_move_stored_to_history(self):
-        self.gameboard.move(0, 0, Markers.PLAYER)
+        self.gameboard.move(0, 0, Marker.PLAYER)
         self.assertEqual((0, 0), self.gameboard.move_history[-1])
 
     def test_undo_removes_from_history(self):
-        self.gameboard.move(0, 0, Markers.PLAYER)
+        self.gameboard.move(0, 0, Marker.PLAYER)
         self.gameboard.undo_move()
         self.assertListEqual([], self.gameboard.move_history)
 
