@@ -3,7 +3,7 @@
 
 ### Coverage
 
-![Test coverage week 3](/docs/weekly_reports/coverage_week3.png)
+![Test coverage week 3](/docs/images/coverage_week3.png)
 
 Currently only the GameBoard class that handles the board state is tested properly with 90% test coverage.
 
