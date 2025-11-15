@@ -22,24 +22,27 @@ I came across transposition tables while trying to figure out how to prevent dup
 Most of the transposition table features are now gone, but I still keep track of explored game board states with the help of zobrist hashing.
 If the algorithm has explored the same game board state before through a different move sequence, it can just use the previously computed value. 
 
+I added more tests for the GameBoard class with test coverage hitting the 90% mark.
+I set up pylint and fixed some of the style issues it reported, but I'll still have to work on splitting functions to improve readability.
 I also spent some time trying to clean up the code at least a tiny bit, but there's still work to be done. 
 
 ### Questions
 
 What search depth should I set as my target for the algorithm?
-I feel like currently the depth 5 search takes too long and the tends to balloon too much later in the game.
+I feel like the current depth 5 search takes too long and the tends to balloon far too much later in the game.
+Iterative deepening would help a lot with this issue, but I'm not sure if I would have enough time to implement it.
 
-Do the values I have used for row patterns (GameBoard.PATTERN_VALUES) make sense and could they be improved?
+Do the row patterns or the values for them (GameBoard.PATTERN_VALUES) make sense or could they be improved?
 
 Should I use location or move value based ordering?
 As I mentioned before, although the values are only based on a shallow lookup, I found the move value based sorting improved the pruning.
 
-I am tempted to try iterative deepening, but is that too much work for a project of this scale?
 
 ### Next week
 
-The plan for next week is to focus on improving the tests and documentation as well as getting the project ready for peer review.
+The plan for next week is to focus on adding tests for the algorithms and game play loop.
+Other than that I'll work on documentation as well as getting the project ready for peer review.
 
 
-Hours spent this week: 25
+Hours spent this week: 28
 

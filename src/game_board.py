@@ -47,7 +47,7 @@ class GameBoard:
     }
 
 
-    VALID_MOVE_POSITIONS = [(-1,-1), (1,-1), (-1,1), (1,1), (0,-1), (-1,0), (1,0), (0,1),
+    CANDIDATE_POSITIONS = [(-1,-1), (1,-1), (-1,1), (1,1), (0,-1), (-1,0), (1,0), (0,1),
                             (-2,-2), (2,-2), (-2,2), (2,2), (0,-2), (-2,0), (2,0), (0,2)]
 
     def __init__(self, size: int):
@@ -63,7 +63,7 @@ class GameBoard:
         board += "\n"
         for i,row in enumerate(self.board):
             board += f"{i:3} "
-            for j,pos in enumerate(row):
+            for pos in row:
                 board += self.SYMBOLS[pos] + " "
             board += "\n"
         return board
@@ -149,41 +149,41 @@ class GameBoard:
         return self.board[row][col] == Marker.EMPTY
 
     # Old spatial move ordering based on previous move
-    def get_valid_moves(self, curr_valid_moves: list[Move], col, row) -> list[Move]:
-        valid_moves = curr_valid_moves.copy()
-        new_moves = []
+    def get_candidates(self, curr_candidates: list[Move], col, row) -> list[Move]:
+        candidates = curr_candidates.copy()
+        new_candidates = []
 
-        if (col, row) in curr_valid_moves:
-            valid_moves.remove((col, row))
+        if (col, row) in curr_candidates:
+            candidates.remove((col, row))
 
-        for dx, dy in GameBoard.VALID_MOVE_POSITIONS:
-            move_col = col + dx
-            move_row = row + dy
+        for dx, dy in GameBoard.CANDIDATE_POSITIONS:
+            mv_col = col + dx
+            mv_row = row + dy
 
-            if not self.valid_coordinate(move_col, move_row) or not self.empty_space(move_col, move_row):
+            if not self.valid_coordinate(mv_col, mv_row) or not self.empty_space(mv_col, mv_row):
                 continue
 
-            if (move_col, move_row) in valid_moves:
-                valid_moves.remove((move_col, move_row))
-            new_moves.append((move_col, move_row))
+            if (mv_col, mv_row) in candidates:
+                candidates.remove((mv_col, mv_row))
+            new_candidates.append((mv_col, mv_row))
 
-        return new_moves + valid_moves
+        return new_candidates + candidates
 
     # New value based move ordering
-    def get_valid_moves_set(self, valid_moves: set[Move], col: int, row: int) -> set[Move]:
-        new_valid_moves = valid_moves.copy()
-        if (col, row) in new_valid_moves:
-            new_valid_moves.remove((col, row))
+    def get_candidates_set(self, candidates: set[Move], col: int, row: int) -> set[Move]:
+        new_candidates = candidates.copy()
+        if (col, row) in new_candidates:
+            new_candidates.remove((col, row))
 
-        for dx, dy in GameBoard.VALID_MOVE_POSITIONS:
-            move_col = col + dx
-            move_row = row + dy
+        for dx, dy in GameBoard.CANDIDATE_POSITIONS:
+            mv_col = col + dx
+            mv_row = row + dy
 
-            if not self.valid_coordinate(move_col, move_row) or not self.empty_space(move_col, move_row):
+            if not self.valid_coordinate(mv_col, mv_row) or not self.empty_space(mv_col, mv_row):
                 continue
-            new_valid_moves.add((move_col, move_row))
+            new_candidates.add((mv_col, mv_row))
 
-        return new_valid_moves
+        return new_candidates
 
 
     def update_hash(self, col: int, row: int, marker: Marker):
