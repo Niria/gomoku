@@ -24,8 +24,8 @@ class GameBoard:
         "01110": 50000,
         "010110": 50000,
         "011010": 50000,
-        "21110": 10000,
-        "01112": 10000,
+        "211100": 10000,
+        "001112": 10000,
         "010112": 1000,
         "211010": 1000,
         "11000": 200,
@@ -35,8 +35,8 @@ class GameBoard:
         "01010": 200,
         "10100": 200,
         "00101": 200,
-        "00112": 50,
-        "21100": 50,
+        "000112": 50,
+        "211000": 50,
         "00100": 10,
         "1": 1
     }
@@ -185,6 +185,10 @@ class GameBoard:
 
         return new_candidates
 
+    def get_distance_to_prev_move(self, col: int, row: int) -> int:
+        prev_col, prev_row = self.move_history[-1]
+        distance = max(abs(prev_col - col), abs(prev_row - row))
+        return distance
 
     def update_hash(self, col: int, row: int, marker: Marker):
         self.zobrist_hash ^= self.zobrist_table[row][col][marker]

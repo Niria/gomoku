@@ -1,143 +1,134 @@
+import time
+
 from game_board import GameBoard, Marker, Move
 from helpers import function_call_counter
 
 
 class GomokuAI:
-
     def __init__(self):
         self.visited = {}
-        self.heatmap = None
-        self.duplicates = 0
-        self.value_map = None
-        self.prunes = 0
 
     def find_ai_move(self, gameboard: GameBoard, candidates: set[Move],
-                     current_value: int, depth: int=5) -> Move:
+                     current_value: int, turn_time_limit=10.0) -> Move:
         self.visited = {}
         best_move = None
-        highest_value = float('-inf')
         alpha = float('-inf')
         beta = float('inf')
 
-        self.heatmap = [[0 for _ in range(gameboard.size)] for _ in range(gameboard.size)]
-        self.value_map = [[0 for _ in range(gameboard.size)] for _ in range(gameboard.size)]
-        GomokuAI.minimax.calls = 0
+        start_time = time.time()
 
-        sorted_candidates = []
-        for move in candidates:
-            col, row = move
-            mv_value = gameboard.get_move_value(col, row, Marker.AI)
-            sorted_candidates.append((move, mv_value))
-            sorted_candidates.sort(key=lambda x: x[1], reverse=True)
+        for depth in range (1,50):
+            try:
+                GomokuAI.minimax.calls = 0
 
-        for move, move_value in sorted_candidates:
-            col, row = move
-            self.heatmap[row][col] += 1
-            new_value = current_value + move_value
-            new_candidates = gameboard.get_candidates_set(candidates, col, row)
+                value, move = self.minimax(gameboard, alpha, beta, True, candidates, current_value, depth, start_time, turn_time_limit)
 
-            gameboard.move(col, row, Marker.AI)
-            minimax_value = self.minimax(gameboard, alpha, beta, False,
-                                         new_candidates, new_value, depth - 1)
-            gameboard.undo_move()
-
-            if minimax_value > highest_value:
-                highest_value = minimax_value
                 best_move = move
-                self.value_map[row][col] = highest_value
+                print(f"Depth: {depth} done, best move: {best_move}")
 
-            if not self.value_map[row][col] and minimax_value == highest_value:
-                self.value_map[row][col] = -1
-            else:
-                self.value_map[row][col] = minimax_value
+                if value >= gameboard.PATTERN_VALUES["11111"]:
+                    break
 
-
-            alpha = max(alpha, highest_value)
-
-        board = ""
-        for r in self.heatmap:
-            for c in r:
-                board += f"{c:5}"
-            board += "\n"
-        print(board)
-        board = ""
-        for r in self.value_map:
-            for c in r:
-                board += f"{c:5}"
-            board += "\n"
-        print(board)
-
-        print(f"Total minimax calls: {GomokuAI.minimax.calls}, "
-              f"prunes: {self.prunes}, duplicate boards: {self.duplicates}")
-        print(f"AI chose: {chr(best_move[0]+ord('A'))} {best_move[1]}")
+            except Timeout:
+                print(f"Depth: {depth} timeout")
+                break
 
         return best_move
 
     @function_call_counter
     def minimax(self, gameboard: GameBoard, alpha: float, beta: float, maximizing: bool,
-                candidates: set[Move], parent_value: int, depth: int) -> int:
+                candidates: set[Move], parent_value: int, depth: int, start_time: float, turn_time_limit: float) -> tuple[int, Move | None]:
+        if time.time() - start_time >= turn_time_limit:
+            raise Timeout()
+
+        prev_best_move = None
+
         if gameboard.zobrist_hash in self.visited:
-            self.duplicates += 1
-            return self.visited[gameboard.zobrist_hash]
+            prev_value, prev_move, prev_depth = self.visited[gameboard.zobrist_hash]
+            if prev_depth >= depth:
+                return prev_value, prev_move
+            prev_best_move = prev_move
 
         if depth == 0 or gameboard.win_state():
-            return parent_value
+            return parent_value, None
 
         marker = Marker.AI if maximizing else Marker.PLAYER
 
+        prev_best = []
+        if prev_best_move in candidates:
+            col, row = prev_best_move
+            prev_best_value = gameboard.get_move_value(col, row, marker)
+            prev_best_distance = gameboard.get_distance_to_prev_move(col, row)
+            prev_best = [(prev_best_move, prev_best_value, prev_best_distance)]
+
         sorted_candidates = []
         for move in candidates:
+            if move == prev_best_move:
+                continue
             col, row = move
             mv_value = gameboard.get_move_value(col, row, marker)
-            sorted_candidates.append((move, mv_value))
+            mv_distance = gameboard.get_distance_to_prev_move(col, row)
+            sorted_candidates.append((move, mv_value, mv_distance))
 
         if maximizing:
-            value = float('-inf')
-            sorted_candidates.sort(key=lambda x: x[1], reverse=True)
+            sorted_candidates.sort(key=lambda x: (x[1], -x[2]), reverse=True)
+        else:
+            sorted_candidates.sort(key=lambda x: (x[1], x[2]), reverse=False)
+        sorted_candidates = prev_best + sorted_candidates
 
-            for move, move_value in sorted_candidates:
+        best_move = None
+        if maximizing:
+            max_value = float('-inf')
+
+            for move, move_value, _ in sorted_candidates:
                 col, row = move
-                self.heatmap[row][col] += 1
                 new_value = parent_value + move_value
                 new_candidates = gameboard.get_candidates_set(candidates, col, row)
-
                 gameboard.move(col, row, marker)
-                value = max(value, self.minimax(gameboard, alpha, beta, False,
-                                                new_candidates, new_value, depth - 1))
-                gameboard.undo_move()
+                try:
+                    value, _ = self.minimax(gameboard, alpha, beta, False, new_candidates, new_value, depth - 1, start_time, turn_time_limit)
+                finally:
+                    gameboard.undo_move()
+                if value > max_value:
+                    max_value = value
+                    best_move = move
 
                 alpha = max(alpha, value)
 
                 if alpha >= beta:
-                    self.prunes += 1
-                    # print(f"pruned in max, depth: {depth} alpha: {alpha} beta: {beta}")
+                    self.visited[gameboard.zobrist_hash] = max_value, best_move, depth
                     break
 
-            self.visited[gameboard.zobrist_hash] = value
+            self.visited[gameboard.zobrist_hash] = max_value, best_move, depth
 
-            return value
+            return max_value, best_move
         else:
-            value = float('inf')
-            sorted_candidates.sort(key=lambda x: x[1])
+            min_value = float('inf')
 
-            for move, move_value in sorted_candidates:
+            for move, move_value, _ in sorted_candidates:
                 col, row = move
-                self.heatmap[row][col] += 1
                 new_value = parent_value + move_value
                 new_candidates = gameboard.get_candidates_set(candidates, col, row)
 
                 gameboard.move(col, row, marker)
-                value = min(value, self.minimax(gameboard, alpha, beta, True,
-                                                new_candidates, new_value, depth - 1))
-                gameboard.undo_move()
+                try:
+                    value, _ = self.minimax(gameboard, alpha, beta, True, new_candidates, new_value, depth - 1, start_time, turn_time_limit)
+                finally:
+                    gameboard.undo_move()
+
+                if value < min_value:
+                    min_value = value
+                    best_move = move
 
                 beta = min(beta, value)
 
                 if alpha >= beta:
-                    self.prunes += 1
-                    # print(f"pruned in min, depth: {depth} alpha: {alpha} beta: {beta}")
+                    self.visited[gameboard.zobrist_hash] = min_value, best_move, depth
                     break
+            self.visited[gameboard.zobrist_hash] = min_value, best_move, depth
 
-            self.visited[gameboard.zobrist_hash] = value
+            return min_value, best_move
 
-            return value
+
+class Timeout(Exception):
+    pass
