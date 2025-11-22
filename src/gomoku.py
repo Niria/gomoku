@@ -13,6 +13,10 @@ class Gomoku:
 
 
     def run(self) -> None:
+        """
+        Runs the gomoku gameplay loop.
+        :return:
+        """
         print(self.gameboard)
         print()
 
@@ -33,18 +37,18 @@ class Gomoku:
                 if not self.gameboard.valid_move(col, row):
                     print(f"Invalid input, X and Y must be between 0 and {self.gameboard.size - 1}")
                     continue
-                print(f"val before player: {self.current_value}")
+                print(f"value before player: {self.current_value}")
                 self.current_value += self.gameboard.get_move_value(col, row, Marker.PLAYER)
-                print(f"val after player: {self.current_value}")
+                print(f"value after player: {self.current_value}")
                 # print(f"curr value: {self.current_value}")
 
                 self.gameboard.move(col, row, Marker.PLAYER)
 
             else:
                 col, row = self.ai.find_ai_move(self.gameboard, self.candidates, self.current_value)
-                print(f"val before AI: {self.current_value}")
+                print(f"value before AI: {self.current_value}")
                 self.current_value += self.gameboard.get_move_value(col, row, Marker.AI)
-                print(f"val after AI: {self.current_value}")
+                print(f"value after AI: {self.current_value}")
                 self.gameboard.move(col, row, Marker.AI)
 
             if self.gameboard.win_state():
@@ -58,6 +62,9 @@ class Gomoku:
             self.candidates = self.gameboard.get_candidates_set(self.candidates, col, row)
 
             if not self.players_turn:
+                print()
+                ai_col, ai_row = self.gameboard.move_history[-1]
+                print(f"AI chose: ({chr(ord("A")+ai_col)}, {ai_row})\n")
                 print(self.gameboard)
             self.players_turn = not self.players_turn
             print(f"history: {self.gameboard.move_history}")

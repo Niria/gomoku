@@ -10,6 +10,14 @@ class GomokuAI:
 
     def find_ai_move(self, gameboard: GameBoard, candidates: set[Move],
                      current_value: int, turn_time_limit=10.0) -> Move:
+        """
+        Initiates the minimax with alpha-beta pruning
+        :param gameboard: Instance of GameBoard
+        :param candidates: Set of candidate moves
+        :param current_value: The heuristic value of the current game state
+        :param turn_time_limit: Time limit for the AI's turn
+        :return: The best move for the AI
+        """
         self.visited = {}
         best_move = None
         alpha = float('-inf')
@@ -21,12 +29,14 @@ class GomokuAI:
             try:
                 GomokuAI.minimax.calls = 0
 
-                value, move = self.minimax(gameboard, alpha, beta, True, candidates, current_value, depth, start_time, turn_time_limit)
+                value, move = self.minimax(gameboard, alpha, beta, True, candidates,
+                                           current_value, depth, start_time, turn_time_limit)
 
                 best_move = move
-                print(f"Depth: {depth} done, best move: {best_move}")
+                print(f"Depth: {depth} done, best move: {best_move}, minimax calls: {GomokuAI.minimax.calls}")
 
-                if value >= gameboard.PATTERN_VALUES["11111"]:
+                if value >= gameboard.OPEN_FOUR * 0.8:
+                    print(f"Open four found, value: {value} move: {best_move}")
                     break
 
             except Timeout:
@@ -37,7 +47,21 @@ class GomokuAI:
 
     @function_call_counter
     def minimax(self, gameboard: GameBoard, alpha: float, beta: float, maximizing: bool,
-                candidates: set[Move], parent_value: int, depth: int, start_time: float, turn_time_limit: float) -> tuple[int, Move | None]:
+                candidates: set[Move], parent_value: int, depth: int, start_time: float,
+                turn_time_limit: float) -> tuple[int, Move | None]:
+        """
+        Minimax algorithm
+        :param gameboard: Instance of GameBoard
+        :param alpha: The alpha value used in alpha-beta pruning
+        :param beta: The beta value used in alpha-beta pruning
+        :param maximizing: Boolean toggle for minimax's max_value and min_value computation
+        :param candidates: List of candidate moves
+        :param parent_value: Heuristic value of the game state prior to trying the candidate moves
+        :param depth: The depth remaining in the minimax search
+        :param start_time: Starting time for the search
+        :param turn_time_limit: Maximum time that the AI can take to determine the best move
+        :return:
+        """
         if time.time() - start_time >= turn_time_limit:
             raise Timeout()
 
@@ -62,13 +86,26 @@ class GomokuAI:
             prev_best = [(prev_best_move, prev_best_value, prev_best_distance)]
 
         sorted_candidates = []
+        winning_move = None
         for move in candidates:
             if move == prev_best_move:
                 continue
             col, row = move
             mv_value = gameboard.get_move_value(col, row, marker)
+
+            if mv_value >= GameBoard.OPEN_FOUR * 0.8:
+                winning_move = (move, mv_value)
+                break
+
             mv_distance = gameboard.get_distance_to_prev_move(col, row)
             sorted_candidates.append((move, mv_value, mv_distance))
+
+        if winning_move:
+            best_move = winning_move[0]
+            value = parent_value + winning_move[1]
+
+            self.visited[gameboard.zobrist_hash] = value, best_move, depth
+            return value, best_move
 
         if maximizing:
             sorted_candidates.sort(key=lambda x: (x[1], -x[2]), reverse=True)
@@ -86,7 +123,8 @@ class GomokuAI:
                 new_candidates = gameboard.get_candidates_set(candidates, col, row)
                 gameboard.move(col, row, marker)
                 try:
-                    value, _ = self.minimax(gameboard, alpha, beta, False, new_candidates, new_value, depth - 1, start_time, turn_time_limit)
+                    value, _ = self.minimax(gameboard, alpha, beta, False, new_candidates,
+                                            new_value, depth - 1, start_time, turn_time_limit)
                 finally:
                     gameboard.undo_move()
                 if value > max_value:
@@ -112,7 +150,8 @@ class GomokuAI:
 
                 gameboard.move(col, row, marker)
                 try:
-                    value, _ = self.minimax(gameboard, alpha, beta, True, new_candidates, new_value, depth - 1, start_time, turn_time_limit)
+                    value, _ = self.minimax(gameboard, alpha, beta, True, new_candidates,
+                                            new_value, depth - 1, start_time, turn_time_limit)
                 finally:
                     gameboard.undo_move()
 
