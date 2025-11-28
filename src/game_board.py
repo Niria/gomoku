@@ -11,49 +11,23 @@ class Marker(IntEnum):
 
 
 class GameBoard:
-    WIN_VALUE = 10000000
-    OPEN_FOUR = 1000000
-    OPEN_THREE = 50000
+    WIN_VALUE = 1000000
+    OPEN_FOUR = 100000 * 2
+    OPEN_THREE = 10000 * 2
 
-    PATTERN_VALUES = {
-        "11111": WIN_VALUE,
-        "011110": OPEN_FOUR,
-        "011112": 100000,
-        "211110": 100000,
-        "01111": 100000,
-        "11110": 100000,
-        "10111": 75000,
-        "11011": 75000,
-        "11101": 75000,
-        "01110": OPEN_THREE,
-        "0101010": 50000,
-        "010110": 50000,
-        "011010": 50000,
-        "211100": 10000,
-        "001112": 10000,
-        "21110": 5000,
-        "01112": 5000,
-        "010112": 1000,
-        "211010": 1000,
-        "11000": 200,
-        "00011": 200,
-        "01100": 200,
-        "00110": 200,
-        "01010": 200,
-        "10100": 200,
-        "00101": 200,
-        "000112": 50,
-        "211000": 50,
-        "211112": 40,
-        "21112": 30,
-        "00100": 10
+    VALUES = {
+        5: 1000000,
+        4: 100000,
+        3: 10000,
+        2: 100,
+        1: 10
     }
+
     SYMBOLS = {
         Marker.EMPTY: ".",
         Marker.PLAYER: "X",
         Marker.AI: "O",
     }
-
 
     CANDIDATE_POSITIONS = [(-1,-1), (1,-1), (-1,1), (1,1), (0,-1), (-1,0), (1,0), (0,1),
                             (-2,-2), (2,-2), (-2,2), (2,2), (0,-2), (-2,0), (2,0), (0,2)]
@@ -64,8 +38,6 @@ class GameBoard:
         self.move_history: list[Move] = []
         self.zobrist_hash = 0
         self.zobrist_table: list[list[list[int]]] = generate_zobrist_table(size)
-        self.player_patterns = self.precompute_player_patterns()
-        self.ai_patterns = self.precompute_ai_patterns()
 
     def __str__(self) -> str:
         board = "    "
@@ -169,28 +141,50 @@ class GameBoard:
 
     def get_row_value(self, row: list[int]) -> int:
         """
-        Computes the value of the given row
-        :param row: List of empty, player and AI markers
-        :return: Heuristic value of the given row
+        Uses a sliding window algorithm to calculate the value of the given row.
+        :param row: List of markers
+        :return: Heuristic value of the row
         """
-        row = "".join(str(n) for n in row)
-        player_value = 0
-        ai_value = 0
+        row_value = 0
+        row_len = len(row)
+        if row_len < 5:
+            return row_value
 
-        for pattern, value in self.player_patterns:
-            if pattern in row:
-                player_value = value
-                break
+        player_count = 0
+        ai_count = 0
 
-        for pattern, value in self.ai_patterns:
-            if pattern in row:
-                ai_value = value
-                break
+        for i in range(5):
+            if row[i] == Marker.PLAYER:
+                player_count += 1
+            elif row[i] == Marker.AI:
+                ai_count += 1
 
-        if player_value >= self.OPEN_THREE:
-            return ai_value - int(player_value*4)
-        else:
-            return ai_value - int(player_value*1.2)
+        if player_count > 0 and ai_count == 0:
+            row_value -= self.VALUES[player_count]
+        elif ai_count > 0 and player_count == 0:
+            row_value += self.VALUES[ai_count]
+
+        for i in range(5, row_len):
+            removed_from_window = row[i-5]
+            if removed_from_window == Marker.PLAYER:
+                player_count -= 1
+            elif removed_from_window == Marker.AI:
+                ai_count -= 1
+
+            added_to_window = row[i]
+            if added_to_window == Marker.PLAYER:
+                player_count += 1
+            elif added_to_window == Marker.AI:
+                ai_count += 1
+
+            if player_count > 0 and ai_count > 0:
+                continue
+            elif player_count > 0:
+                row_value -= self.VALUES[player_count]
+            elif ai_count > 0:
+                row_value += self.VALUES[ai_count]
+
+        return row_value
 
     def valid_move(self, col: int, row: int) -> bool:
         """
@@ -221,19 +215,18 @@ class GameBoard:
         """
         return self.board[row][col] == Marker.EMPTY
 
-    def get_candidates_set(self, candidates: set[Move], col: int, row: int) -> set[Move]:
+    def update_candidates(self, candidates: set[Move], col: int, row: int) -> list[Move]:
         """
-        Updates a list of candidate moves with new possible moves that are within 1 and 2 spaces
-        of the latest move. A maximum of 16 moves are added to the candidate list, since only
-        candidates that are on the same rows as the move are considered.
+        Updates the candidates set by adding new candidates from the move (col, row).
         :param candidates: List of candidate moves
         :param col: Column of the board
         :param row: Row of the board
-        :return: List of candidate moves
+        :return: List of moves added to the candidates set
         """
-        new_candidates = candidates.copy()
-        if (col, row) in new_candidates:
-            new_candidates.remove((col, row))
+        if (col, row) in candidates:
+            candidates.remove((col, row))
+
+        new_candidates = []
 
         for dx, dy in GameBoard.CANDIDATE_POSITIONS:
             mv_col = col + dx
@@ -241,7 +234,10 @@ class GameBoard:
 
             if not self.valid_coordinate(mv_col, mv_row) or not self.empty_space(mv_col, mv_row):
                 continue
-            new_candidates.add((mv_col, mv_row))
+
+            if (mv_col, mv_row) not in candidates:
+                new_candidates.append((mv_col, mv_row))
+                candidates.add((mv_col, mv_row))
 
         return new_candidates
 
@@ -266,29 +262,3 @@ class GameBoard:
         :return: None
         """
         self.zobrist_hash ^= self.zobrist_table[row][col][marker]
-
-    def precompute_player_patterns(self) -> list[tuple[str, int]]:
-        """
-        Precomputes the patterns for identifying useful row states for the player.
-        :return: List of (pattern, value) tuples
-        """
-        patterns = []
-        for p, v in self.PATTERN_VALUES.items():
-            patterns.append((p,v))
-        patterns.sort(key=lambda x: x[1], reverse=True)
-
-        return patterns
-
-    def precompute_ai_patterns(self) -> list[tuple[str, int]]:
-        """
-        Precomputes the patterns for identifying useful row states for the AI.
-        :return: List of (pattern, value) tuples
-        """
-        flip = {"0": "0", "1": "2", "2": "1"}
-        patterns = []
-        for p, v in self.PATTERN_VALUES.items():
-            flipped_pattern = "".join([flip[c] for c in p])
-            patterns.append((flipped_pattern, v))
-        patterns.sort(key=lambda x: x[1], reverse=True)
-
-        return patterns

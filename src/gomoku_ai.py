@@ -24,12 +24,13 @@ class GomokuAI:
         beta = float('inf')
 
         start_time = time.time()
+        candidates_copy = candidates.copy()
 
         for depth in range (1,50):
             try:
                 GomokuAI.minimax.calls = 0
 
-                value, move = self.minimax(gameboard, alpha, beta, True, candidates,
+                value, move = self.minimax(gameboard, alpha, beta, True, candidates_copy,
                                            current_value, depth, start_time, turn_time_limit)
 
                 best_move = move
@@ -120,13 +121,18 @@ class GomokuAI:
             for move, move_value, _ in sorted_candidates:
                 col, row = move
                 new_value = parent_value + move_value
-                new_candidates = gameboard.get_candidates_set(candidates, col, row)
+
+                new_candidates = gameboard.update_candidates(candidates, col, row)
                 gameboard.move(col, row, marker)
+
                 try:
-                    value, _ = self.minimax(gameboard, alpha, beta, False, new_candidates,
+                    value, _ = self.minimax(gameboard, alpha, beta, False, candidates,
                                             new_value, depth - 1, start_time, turn_time_limit)
                 finally:
                     gameboard.undo_move()
+                    for new_candidate in new_candidates:
+                        candidates.remove(new_candidate)
+                    candidates.add(move)
                 if value > max_value:
                     max_value = value
                     best_move = move
@@ -146,14 +152,17 @@ class GomokuAI:
             for move, move_value, _ in sorted_candidates:
                 col, row = move
                 new_value = parent_value + move_value
-                new_candidates = gameboard.get_candidates_set(candidates, col, row)
 
+                new_candidates = gameboard.update_candidates(candidates, col, row)
                 gameboard.move(col, row, marker)
                 try:
-                    value, _ = self.minimax(gameboard, alpha, beta, True, new_candidates,
+                    value, _ = self.minimax(gameboard, alpha, beta, True, candidates,
                                             new_value, depth - 1, start_time, turn_time_limit)
                 finally:
                     gameboard.undo_move()
+                    for new_candidate in new_candidates:
+                        candidates.remove(new_candidate)
+                    candidates.add(move)
 
                 if value < min_value:
                     min_value = value

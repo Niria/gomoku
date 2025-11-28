@@ -31,7 +31,7 @@ class Gomoku:
                     col = char_to_number(col)
                     row = int(row)
                 except ValueError:
-                    print("Invalid input, X and Y must be between 0 and {self.gameboard.size - 1}")
+                    print(f"Invalid input, X and Y must be between 0 and {self.gameboard.size - 1}")
                     break
 
                 if not self.gameboard.valid_move(col, row):
@@ -59,7 +59,8 @@ class Gomoku:
                 print(self.gameboard)
                 break
 
-            self.candidates = self.gameboard.get_candidates_set(self.candidates, col, row)
+            self.gameboard.update_candidates(self.candidates, col, row)
+            print(f"candidates: {self.candidates} move: ({col}, {row})")
 
             if not self.players_turn:
                 print()

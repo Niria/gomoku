@@ -107,7 +107,7 @@ class TestGameBoard(unittest.TestCase):
         self.gameboard.board[5][5] = Marker.PLAYER
         old_candidates = [(4,5), (10,10), (3,4)]
         real_candidates = [(3,4), (5,4), (3,6), (5,6), (4,4), (3,5), (4,6), (2,3), (6,3), (2,7), (6,7), (4,3), (2,5), (6,5), (4,7), (10,10)]
-        self.assertListEqual(real_candidates, self.gameboard.get_candidates(old_candidates, 4, 5))
+        self.assertListEqual(real_candidates, self.gameboard.update_candidates(old_candidates, 4, 5))
 
     def test_get_candidates_set_returns_correct_set(self):
         self.gameboard.board[5][5] = Marker.PLAYER
