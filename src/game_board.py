@@ -11,16 +11,41 @@ class Marker(IntEnum):
 
 
 class GameBoard:
-    WIN_VALUE = 1000000
-    OPEN_FOUR = 100000 * 2
-    OPEN_THREE = 10000 * 2
+    WIN_VALUE = 10000000
+    OPEN_FOUR = 1000000
+    OPEN_THREE = 50000
 
-    VALUES = {
-        5: 1000000,
-        4: 100000,
-        3: 10000,
-        2: 100,
-        1: 10
+    PATTERN_VALUES = {
+        "11111": WIN_VALUE,
+        "011110": OPEN_FOUR,
+        "011112": 100000,
+        "211110": 100000,
+        "01111": 100000,
+        "11110": 100000,
+        "10111": 75000,
+        "11011": 75000,
+        "11101": 75000,
+        "01110": OPEN_THREE,
+        "0101010": 50000,
+        "010110": 50000,
+        "011010": 50000,
+        "211100": 10000,
+        "001112": 10000,
+        "21110": 5000,
+        "01112": 5000,
+        "010112": 1000,
+        "211010": 1000,
+        "11000": 200,
+        "00011": 200,
+        "01100": 200,
+        "00110": 200,
+        "01010": 200,
+        "10100": 200,
+        "00101": 200,
+        "000112": 50,
+        "211000": 50,
+        "211112": 40,
+        "21112": 30,
     }
 
     SYMBOLS = {
@@ -38,6 +63,9 @@ class GameBoard:
         self.move_history: list[Move] = []
         self.zobrist_hash = 0
         self.zobrist_table: list[list[list[int]]] = generate_zobrist_table(size)
+        self.player_patterns = self.precompute_player_patterns()
+        self.ai_patterns = self.precompute_ai_patterns()
+
 
     def __str__(self) -> str:
         board = "    "
@@ -81,13 +109,32 @@ class GameBoard:
         """
         if not self.move_history:
             return False
-        col, row = self.move_history[-1]
-        rows = self.get_rows_containing_move(col, row)
 
-        for row, _ in rows:
-            if abs(self.get_row_value(row)) == self.WIN_VALUE:
+        col, row = self.move_history[-1]
+        marker = self.board[row][col]
+        directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+
+        for dx, dy in directions:
+            count = 1
+
+            c = col + dx
+            r = row + dy
+            while self.valid_coordinate(c, r) and self.board[r][c] == marker:
+                count += 1
+                c += dx
+                r += dy
+
+            c = col - dx
+            r = row - dy
+            while self.valid_coordinate(c, r) and self.board[r][c] == marker:
+                count +=1
+                c -= dx
+                r -= dy
+
+            if count >= 5:
                 return True
         return False
+
 
     def get_move_value(self, col: int, row: int, marker: Marker) -> int:
         """
@@ -128,7 +175,7 @@ class GameBoard:
             current_row = []
             mv_index = 0
 
-            for i in range(-6, 7):
+            for i in range(-5, 6):
                 if i == 0:
                     mv_index = len(current_row)
                 c = col + i*dx
@@ -141,50 +188,32 @@ class GameBoard:
 
     def get_row_value(self, row: list[int]) -> int:
         """
-        Uses a sliding window algorithm to calculate the value of the given row.
-        :param row: List of markers
-        :return: Heuristic value of the row
+        Computes the value of the given row
+        :param row: List of empty, player and AI markers
+        :return: Heuristic value of the given row
         """
-        row_value = 0
-        row_len = len(row)
-        if row_len < 5:
-            return row_value
+        row = "".join(str(n) for n in row)
 
-        player_count = 0
-        ai_count = 0
+        if "11" not in row and "101" not in row and "22" not in row and "202" not in row:
+            return 0
 
-        for i in range(5):
-            if row[i] == Marker.PLAYER:
-                player_count += 1
-            elif row[i] == Marker.AI:
-                ai_count += 1
+        player_value = 0
+        ai_value = 0
 
-        if player_count > 0 and ai_count == 0:
-            row_value -= self.VALUES[player_count]
-        elif ai_count > 0 and player_count == 0:
-            row_value += self.VALUES[ai_count]
+        for pattern, value in self.player_patterns:
+            if pattern in row:
+                player_value = value
+                break
 
-        for i in range(5, row_len):
-            removed_from_window = row[i-5]
-            if removed_from_window == Marker.PLAYER:
-                player_count -= 1
-            elif removed_from_window == Marker.AI:
-                ai_count -= 1
+        for pattern, value in self.ai_patterns:
+            if pattern in row:
+                ai_value = value
+                break
 
-            added_to_window = row[i]
-            if added_to_window == Marker.PLAYER:
-                player_count += 1
-            elif added_to_window == Marker.AI:
-                ai_count += 1
-
-            if player_count > 0 and ai_count > 0:
-                continue
-            elif player_count > 0:
-                row_value -= self.VALUES[player_count]
-            elif ai_count > 0:
-                row_value += self.VALUES[ai_count]
-
-        return row_value
+        if player_value >= self.OPEN_THREE:
+            return ai_value - int(player_value*4)
+        else:
+            return ai_value - int(player_value)
 
     def valid_move(self, col: int, row: int) -> bool:
         """
@@ -262,3 +291,29 @@ class GameBoard:
         :return: None
         """
         self.zobrist_hash ^= self.zobrist_table[row][col][marker]
+
+    def precompute_player_patterns(self) -> list[tuple[str, int]]:
+        """
+        Precomputes the patterns for identifying useful row states for the player.
+        :return: List of (pattern, value) tuples
+        """
+        patterns = []
+        for p, v in self.PATTERN_VALUES.items():
+            patterns.append((p, v))
+        patterns.sort(key=lambda x: x[1], reverse=True)
+
+        return patterns
+
+    def precompute_ai_patterns(self) -> list[tuple[str, int]]:
+        """
+        Precomputes the patterns for identifying useful row states for the AI.
+        :return: List of (pattern, value) tuples
+        """
+        flip = {"0": "0", "1": "2", "2": "1"}
+        patterns = []
+        for p, v in self.PATTERN_VALUES.items():
+            flipped_pattern = "".join([flip[c] for c in p])
+            patterns.append((flipped_pattern, v))
+        patterns.sort(key=lambda x: x[1], reverse=True)
+
+        return patterns
