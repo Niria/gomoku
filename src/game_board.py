@@ -46,7 +46,6 @@ class GameBoard:
         "211000": 50,
         "211112": 40,
         "21112": 30,
-        "00100": 10
     }
 
     SYMBOLS = {
@@ -194,6 +193,10 @@ class GameBoard:
         :return: Heuristic value of the given row
         """
         row = "".join(str(n) for n in row)
+
+        if "11" not in row and "101" not in row and "22" not in row and "202" not in row:
+            return 0
+
         player_value = 0
         ai_value = 0
 
@@ -210,7 +213,7 @@ class GameBoard:
         if player_value >= self.OPEN_THREE:
             return ai_value - int(player_value*4)
         else:
-            return ai_value - int(player_value*1.2)
+            return ai_value - int(player_value)
 
     def valid_move(self, col: int, row: int) -> bool:
         """
