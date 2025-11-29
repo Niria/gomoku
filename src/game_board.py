@@ -11,16 +11,21 @@ class Marker(IntEnum):
 
 
 class GameBoard:
-    WIN_VALUE = 1000000
+    WIN_VALUE = 10000000
     OPEN_FOUR = 100000 * 2
     OPEN_THREE = 10000 * 2
 
     VALUES = {
-        5: 1000000,
-        4: 100000,
-        3: 10000,
-        2: 100,
-        1: 10
+        (5, 0): -10000000,
+        (4, 0): -1000000,
+        (3, 0): -100000,
+        (2, 0): -1000,
+        (1, 0): -10,
+        (0, 5): 10000000,
+        (0, 4): 100000,
+        (0, 3): 1000,
+        (0, 2): 100,
+        (0, 1): 10
     }
 
     SYMBOLS = {
@@ -81,13 +86,32 @@ class GameBoard:
         """
         if not self.move_history:
             return False
-        col, row = self.move_history[-1]
-        rows = self.get_rows_containing_move(col, row)
 
-        for row, _ in rows:
-            if abs(self.get_row_value(row)) == self.WIN_VALUE:
+        col, row = self.move_history[-1]
+        marker = self.board[row][col]
+        directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+
+        for dx, dy in directions:
+            count = 1
+
+            c = col + dx
+            r = row + dy
+            while self.valid_coordinate(c, r) and self.board[r][c] == marker:
+                count += 1
+                c += dx
+                r += dy
+
+            c = col - dx
+            r = row - dy
+            while self.valid_coordinate(c, r) and self.board[r][c] == marker:
+                count +=1
+                c -= dx
+                r -= dy
+
+            if count >= 5:
                 return True
         return False
+
 
     def get_move_value(self, col: int, row: int, marker: Marker) -> int:
         """
@@ -128,7 +152,7 @@ class GameBoard:
             current_row = []
             mv_index = 0
 
-            for i in range(-6, 7):
+            for i in range(-5, 6):
                 if i == 0:
                     mv_index = len(current_row)
                 c = col + i*dx
@@ -159,10 +183,9 @@ class GameBoard:
             elif row[i] == Marker.AI:
                 ai_count += 1
 
-        if player_count > 0 and ai_count == 0:
-            row_value -= self.VALUES[player_count]
-        elif ai_count > 0 and player_count == 0:
-            row_value += self.VALUES[ai_count]
+
+        if (player_count > 0 and ai_count == 0) or (ai_count > 0 and player_count == 0):
+            row_value += self.VALUES[(player_count, ai_count)]
 
         for i in range(5, row_len):
             removed_from_window = row[i-5]
@@ -179,10 +202,8 @@ class GameBoard:
 
             if player_count > 0 and ai_count > 0:
                 continue
-            elif player_count > 0:
-                row_value -= self.VALUES[player_count]
-            elif ai_count > 0:
-                row_value += self.VALUES[ai_count]
+
+            row_value += self.VALUES.get((player_count, ai_count), 0)
 
         return row_value
 
