@@ -53,9 +53,8 @@ class TestGameBoard(unittest.TestCase):
         # [0,0,0,0,0,0,0,0]    [0,0,0,2,0,0,0,0]
         # [0,0,0,2,0,0,0,0]    [0,0,0,2,2,0,0,0]
 
-        old_value = 2*GameBoard.PATTERN_VALUES["00100"] - GameBoard.PATTERN_VALUES["01110"]
-        new_value = (2*GameBoard.PATTERN_VALUES["11000"] - GameBoard.PATTERN_VALUES["01112"]
-                     + GameBoard.PATTERN_VALUES["1"] + GameBoard.PATTERN_VALUES["00100"])
+        old_value = -GameBoard.PATTERN_VALUES["01110"]*4
+        new_value = (2*GameBoard.PATTERN_VALUES["11000"] - GameBoard.PATTERN_VALUES["001112"])
         correct_value = new_value - old_value
 
         self.assertEqual(correct_value, self.gameboard.get_move_value(8, 3, Marker.AI))
@@ -68,14 +67,14 @@ class TestGameBoard(unittest.TestCase):
         self.gameboard.board[4][8] = Marker.AI
 
         correct_rows = [
-            [0,0,0,0,2,0,0,0],
-            [0,1,1,1,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0],
-            [0,0,0,2,0,0,0,0]
+            [0,0,0,0,2,0,0,0,0],
+            [0,0,1,1,1,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,2,0,0,0,0]
         ]
         rows = self.gameboard.get_rows_containing_move(8, 3)
         for i,row in enumerate(rows):
-            self.assertListEqual(correct_rows[i], [int(i) for i in row])
+            self.assertListEqual(correct_rows[i], [int(n) for n in row[0]])
 
     def test_get_row_value_returns_correct_value(self):
         row = [0, 2, 2, 2, 0]
@@ -103,14 +102,10 @@ class TestGameBoard(unittest.TestCase):
     def test_valid_coordinate_in_bounds_returns_true(self):
         self.assertTrue(self.gameboard.valid_coordinate(0, 0))
 
-    def test_get_candidates_returns_correct_list(self):
-        self.gameboard.board[5][5] = Marker.PLAYER
-        old_candidates = [(4,5), (10,10), (3,4)]
-        real_candidates = [(3,4), (5,4), (3,6), (5,6), (4,4), (3,5), (4,6), (2,3), (6,3), (2,7), (6,7), (4,3), (2,5), (6,5), (4,7), (10,10)]
-        self.assertListEqual(real_candidates, self.gameboard.update_candidates(old_candidates, 4, 5))
 
-    def test_get_candidates_set_returns_correct_set(self):
+    def test_update_candidates_returns_correct_list(self):
         self.gameboard.board[5][5] = Marker.PLAYER
         old_candidates = {(5,5), (4,5)}
-        real_candidates = {(3,4), (5,4), (3,6), (5,6), (4,4), (3,5), (4,6), (2,3), (6,3), (2,7), (6,7), (4,3), (2,5), (6,5), (4,7), (5,5)}
-        self.assertSetEqual(real_candidates, self.gameboard.get_candidates_set(old_candidates, 4, 5))
+        added_candidates = [(3,4), (5,4), (3,6), (5,6), (4,4), (3,5), (4,6), (2,3), (6,3), (2,7), (6,7), (4,3), (2,5), (6,5), (4,7)]
+        self.assertEqual(added_candidates, self.gameboard.update_candidates(old_candidates, 4, 5))
+

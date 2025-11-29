@@ -1,16 +1,22 @@
 # Testing Report
 
 
-### Coverage
+## Coverage
 
-![Test coverage week 3](/docs/images/coverage_week3.png)
+![Test coverage week 5](/docs/images/coverage_week5.png)
 
-Currently only the GameBoard class that handles the board state is tested properly with 90% test coverage.
+The GameBoard class is currently tested with 93% coverage and GomokuAI with 87%.
 
+## Testing
 
-### Testing
+All tests are done using the unittest library. 
 
-The GameBoard class is tested using the unittest library. 
-At this stage, all methods apart from str() are tested.
-I'll work on testing the actual algorithms next.
+### GameBoard
+In GameBoard all methods apart from str() are tested.
+
+### GomokuAI
+- Can AI detect available win (horizontal/vertical/diagonal/reverse diagonal)
+- AI blocks player open and split three
+- AI prioritises blocking player open three over creating its own
+- AI creates open four instead of blocked four
 
