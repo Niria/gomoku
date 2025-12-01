@@ -186,6 +186,8 @@ class GomokuAI:
         else:
             if best_value <= alpha_orig:
                 flag = self.TT_UPPER_BOUND
+            elif best_value >= beta:
+                flag = self.TT_LOWER_BOUND
             else:
                 flag = self.TT_EXACT
 
