@@ -12,6 +12,7 @@ class GomokuAI:
     def __init__(self):
         self.visited = {}
         self.best_move_before_timeout = None
+        self.history_table = {}
 
     def find_ai_move(self, gameboard: GameBoard, candidates: set[Move],
                      turn_time_limit=10.0) -> Move:
@@ -28,6 +29,7 @@ class GomokuAI:
 
         start_time = time.time()
         candidates_copy = candidates.copy()
+        self.history_table = {}
 
         for depth in range (1,50):
             try:
@@ -75,6 +77,7 @@ class GomokuAI:
             raise Timeout()
 
         alpha_orig = alpha
+        beta_orig = beta
 
         tt_entry = self.visited.get(gameboard.zobrist_hash)
         if tt_entry:
@@ -92,7 +95,6 @@ class GomokuAI:
 
         prev_best_move = tt_entry[1] if tt_entry else None
 
-
         if gameboard.win_state():
             return (-gameboard.WIN_VALUE if maximizing else gameboard.WIN_VALUE), None
 
@@ -102,69 +104,36 @@ class GomokuAI:
         marker = Marker.AI if maximizing else Marker.PLAYER
         sorted_candidates = []
 
-        winning_move = None
-        if prev_best_move and prev_best_move in candidates:
-            col, row = prev_best_move
-            prev_best_value = gameboard.get_move_value(col, row, marker)
-            if maximizing and prev_best_value >= gameboard.WIN_VALUE * 0.9:
-                winning_move = (prev_best_move, prev_best_value)
-            else:
-                sorted_candidates.append((prev_best_move, prev_best_value, 0))
+        for move in candidates:
+            col, row = move
+            is_prev_best = move == prev_best_move
+            mv_historical_value = self.history_table.get(move, 0)
+            mv_distance = gameboard.get_distance_to_prev_move(col, row)
+            sorted_candidates.append((move, is_prev_best, mv_historical_value, mv_distance))
 
-        if not winning_move:
-            for move in candidates:
-                if move == prev_best_move:
-                    continue
-                col, row = move
-                mv_value = gameboard.get_move_value(col, row, marker)
-
-                is_win = (mv_value >= gameboard.WIN_VALUE) if maximizing else \
-                    (mv_value <= -gameboard.WIN_VALUE)
-                if is_win:
-                    return (parent_value + mv_value), move
-
-                mv_distance = gameboard.get_distance_to_prev_move(col, row)
-                sorted_candidates.append((move, mv_value, mv_distance))
-
-        if winning_move:
-            best_move = winning_move[0]
-            value = parent_value + winning_move[1]
-            self.visited[gameboard.zobrist_hash] = value, best_move, depth, self.TT_EXACT
-            return value, best_move
-
-        if maximizing:
-            sorted_candidates.sort(key=lambda x: (x[1], -x[2]), reverse=True)
-        else:
-            sorted_candidates.sort(key=lambda x: (x[1], x[2]), reverse=False)
-
-        if depth >= 3:
-            max_branches = 18
-        else:
-            max_branches = 12
-        if len(sorted_candidates) > max_branches:
-            sorted_candidates = sorted_candidates[:max_branches]
+        sorted_candidates.sort(key=lambda x: (x[1], x[2], -x[3]), reverse=True)
 
         best_move = None
-        best_value = float('-inf') if maximizing else float('inf')
+        if maximizing:
+            best_value = float('-inf')
+            for move, _, _, _ in sorted_candidates:
+                col, row = move
+                value_delta = gameboard.get_move_value(col, row, marker)
+                new_value = parent_value + value_delta
 
-        for move, move_value, _ in sorted_candidates:
-            col, row = move
-            new_value = parent_value + move_value
+                new_candidates = gameboard.update_candidates(candidates, col, row)
+                gameboard.move(col, row, marker)
 
-            new_candidates = gameboard.update_candidates(candidates, col, row)
-            gameboard.move(col, row, marker)
+                try:
+                    value, _ = self.minimax(gameboard, alpha, beta, not maximizing, candidates,
+                                            new_value, depth - 1, start_time, turn_time_limit,
+                                            root_depth)
+                finally:
+                    gameboard.undo_move()
+                    for new_candidate in new_candidates:
+                        candidates.remove(new_candidate)
+                    candidates.add(move)
 
-            try:
-                value, _ = self.minimax(gameboard, alpha, beta, not maximizing, candidates,
-                                        new_value, depth - 1, start_time, turn_time_limit,
-                                        root_depth)
-            finally:
-                gameboard.undo_move()
-                for new_candidate in new_candidates:
-                    candidates.remove(new_candidate)
-                candidates.add(move)
-
-            if maximizing:
                 if value > best_value:
                     best_value = value
                     best_move = move
@@ -173,25 +142,48 @@ class GomokuAI:
                         self.best_move_before_timeout = best_move
 
                 alpha = max(alpha, best_value)
-            else:
+
+                if alpha >= beta:
+                    self.history_table[best_move] = self.history_table.get(best_move, 0) + 2**depth
+                    break
+
+        else:
+            best_value = float('inf')
+            for move, _, _, _ in sorted_candidates:
+                col, row = move
+                value_delta = gameboard.get_move_value(col, row, marker)
+                new_value = parent_value + value_delta
+
+                new_candidates = gameboard.update_candidates(candidates, col, row)
+                gameboard.move(col, row, marker)
+
+                try:
+                    value, _ = self.minimax(gameboard, alpha, beta, not maximizing, candidates,
+                                            new_value, depth - 1, start_time, turn_time_limit,
+                                            root_depth)
+                finally:
+                    gameboard.undo_move()
+                    for new_candidate in new_candidates:
+                        candidates.remove(new_candidate)
+                    candidates.add(move)
+
                 if value < best_value:
                     best_value = value
                     best_move = move
                 beta = min(beta, best_value)
 
-            if alpha >= beta:
-                flag = self.TT_LOWER_BOUND if maximizing else self.TT_UPPER_BOUND
-                self.visited[gameboard.zobrist_hash] = best_value, best_move, depth, flag
-                break
-        else:
-            if best_value <= alpha_orig:
-                flag = self.TT_UPPER_BOUND
-            elif best_value >= beta:
-                flag = self.TT_LOWER_BOUND
-            else:
-                flag = self.TT_EXACT
+                if alpha >= beta:
+                    self.history_table[best_move] = self.history_table.get(best_move, 0) + 2**depth
+                    break
 
-            self.visited[gameboard.zobrist_hash] = best_value, best_move, depth, flag
+        if best_value <= alpha_orig:
+            tt_flag = self.TT_UPPER_BOUND
+        elif best_value >= beta_orig:
+            tt_flag = self.TT_LOWER_BOUND
+        else:
+            tt_flag = self.TT_EXACT
+
+        self.visited[gameboard.zobrist_hash] = best_value, best_move, depth, tt_flag
 
         return best_value, best_move
 
