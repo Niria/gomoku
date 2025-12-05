@@ -198,6 +198,17 @@ class GomokuAI:
 
     def _get_ordered_moves(self, gameboard: GameBoard, candidates: set[Move],
                            prev_best_move: Optional[Move]) -> list[Move]:
+        """
+        Generates the move ordering based on
+            1) The previous best move stored in TT
+            2) Historical value of moves. The value is based on the amount of alpha-beta cutoffs
+               the move caused.
+            3) Distance from the previous move.
+        :param gameboard: Instance of GameBoard
+        :param candidates: Set of candidate moves
+        :param prev_best_move: The best move from the previous search
+        :return:
+        """
         sorted_candidates = []
         for move in candidates:
             col, row = move
