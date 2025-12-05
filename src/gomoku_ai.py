@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 
 from game_board import GameBoard, Marker, Move
 from helpers import function_call_counter
@@ -10,7 +11,7 @@ class GomokuAI:
     TT_UPPER_BOUND = 2
 
     def __init__(self):
-        self.visited = {}
+        self.transposition_table = {}
         self.best_move_before_timeout = None
         self.history_table = {}
 
@@ -79,9 +80,12 @@ class GomokuAI:
         alpha_orig = alpha
         beta_orig = beta
 
-        tt_entry = self.visited.get(gameboard.zobrist_hash)
+        prev_best_move = None
+        tt_entry = self.transposition_table.get(gameboard.zobrist_hash)
         if tt_entry:
             prev_value, prev_move, prev_depth, flag = tt_entry
+            prev_best_move = prev_move
+
             if prev_depth >= depth:
                 if flag == self.TT_EXACT:
                     return prev_value, prev_move
@@ -93,8 +97,6 @@ class GomokuAI:
                 if alpha >= beta:
                     return prev_value, prev_move
 
-        prev_best_move = tt_entry[1] if tt_entry else None
-
         if gameboard.win_state():
             return (-gameboard.WIN_VALUE if maximizing else gameboard.WIN_VALUE), None
 
@@ -102,24 +104,17 @@ class GomokuAI:
             return parent_value, None
 
         marker = Marker.AI if maximizing else Marker.PLAYER
-        sorted_candidates = []
-
-        for move in candidates:
-            col, row = move
-            is_prev_best = move == prev_best_move
-            mv_historical_value = self.history_table.get(move, 0)
-            mv_distance = gameboard.get_distance_to_prev_move(col, row)
-            sorted_candidates.append((move, is_prev_best, mv_historical_value, mv_distance))
-
-        sorted_candidates.sort(key=lambda x: (x[1], x[2], -x[3]), reverse=True)
-
+        ordered_moves = self._get_ordered_moves(gameboard, candidates, prev_best_move)
         best_move = None
         if maximizing:
             best_value = float('-inf')
-            for i, (move, _, _, _) in enumerate(sorted_candidates):
+            for i, move in enumerate(ordered_moves):
                 col, row = move
                 value_delta = gameboard.get_move_value(col, row, marker)
                 new_value = parent_value + value_delta
+
+                if value_delta >= gameboard.WIN_VALUE:
+                    return new_value, move
 
                 new_candidates = gameboard.update_candidates(candidates, col, row)
                 gameboard.move(col, row, marker)
@@ -160,10 +155,13 @@ class GomokuAI:
 
         else:
             best_value = float('inf')
-            for move, _, _, _ in sorted_candidates:
+            for move in ordered_moves:
                 col, row = move
                 value_delta = gameboard.get_move_value(col, row, marker)
                 new_value = parent_value + value_delta
+
+                if value_delta <= -gameboard.WIN_VALUE:
+                    return new_value, move
 
                 new_candidates = gameboard.update_candidates(candidates, col, row)
                 gameboard.move(col, row, marker)
@@ -194,9 +192,24 @@ class GomokuAI:
         else:
             tt_flag = self.TT_EXACT
 
-        self.visited[gameboard.zobrist_hash] = best_value, best_move, depth, tt_flag
+        self.transposition_table[gameboard.zobrist_hash] = best_value, best_move, depth, tt_flag
 
         return best_value, best_move
+
+    def _get_ordered_moves(self, gameboard: GameBoard, candidates: set[Move],
+                           prev_best_move: Optional[Move]) -> list[Move]:
+        sorted_candidates = []
+        for move in candidates:
+            col, row = move
+            is_prev_best = move == prev_best_move
+            mv_historical_value = self.history_table.get(move, 0)
+            mv_distance = gameboard.get_distance_to_prev_move(col, row)
+            sorted_candidates.append((move, is_prev_best, mv_historical_value, mv_distance))
+
+        sorted_candidates.sort(key=lambda x: (x[1], x[2], -x[3]), reverse=True)
+        ordered_moves = [m[0] for m in sorted_candidates]
+
+        return ordered_moves
 
 
 class Timeout(Exception):
