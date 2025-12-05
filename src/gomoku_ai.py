@@ -116,7 +116,7 @@ class GomokuAI:
         best_move = None
         if maximizing:
             best_value = float('-inf')
-            for move, _, _, _ in sorted_candidates:
+            for i, (move, _, _, _) in enumerate(sorted_candidates):
                 col, row = move
                 value_delta = gameboard.get_move_value(col, row, marker)
                 new_value = parent_value + value_delta
@@ -125,9 +125,20 @@ class GomokuAI:
                 gameboard.move(col, row, marker)
 
                 try:
-                    value, _ = self.minimax(gameboard, alpha, beta, not maximizing, candidates,
+                    if i == 0 or depth < 4:
+                        value, _ = self.minimax(gameboard, alpha, beta, not maximizing, candidates,
                                             new_value, depth - 1, start_time, turn_time_limit,
                                             root_depth)
+                    else:
+                        value, _ = self.minimax(gameboard, alpha, alpha+1, not maximizing, candidates,
+                                                new_value, depth - 1, start_time, turn_time_limit,
+                                                root_depth)
+
+                        if alpha < value < beta:
+                            value, _ = self.minimax(gameboard, alpha, beta, not maximizing,
+                                                    candidates, new_value, depth - 1, start_time,
+                                                    turn_time_limit, root_depth)
+
                 finally:
                     gameboard.undo_move()
                     for new_candidate in new_candidates:
