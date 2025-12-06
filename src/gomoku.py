@@ -4,9 +4,10 @@ from pygame_ui import PygameUI
 
 
 class Gomoku:
-    def __init__(self, size=20):
+    def __init__(self, size: int=20, player_starts: bool=True):
         self.size = size
         self.ui = PygameUI(size)
+        self.player_starts = player_starts
         self._reset()
 
     def _reset(self) -> None:
@@ -16,7 +17,8 @@ class Gomoku:
         self.gameboard = GameBoard(self.size)
         self.ai = GomokuAI()
         self.candidates: set[Move] = set()
-        self.players_turn = True
+        self.players_turn = self.player_starts
+        self.ui.set_starting_player(self.player_starts)
 
     def run(self) -> None:
         """

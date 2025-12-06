@@ -9,6 +9,9 @@ from gomoku_ai import GomokuAI
 
 
 class PygameUI:
+    COLOR_WHITE = (255, 255, 255)
+    COLOR_BLACK = (0, 0, 0)
+
     COLORS = {
         Marker.PLAYER: (0, 0, 0),
         Marker.AI: (255, 255, 255)
@@ -25,6 +28,7 @@ class PygameUI:
         self.display_height = self.board_height + 2*self.board_padding
         self.marker_size = 36
         self.background_colour = (190, 150, 105)
+        self.marker_colours = {}
 
         self.display = pygame.display.set_mode((self.display_width, self.display_height))
         pygame.display.set_caption("Gomoku")
@@ -70,7 +74,8 @@ class PygameUI:
                         gfxdraw.aacircle(self.display, x, y, self.marker_size//2+3, (200, 0, 0))
                         gfxdraw.filled_circle(self.display, x, y, self.marker_size//2+3, (200, 0, 0))
 
-                    color = self.COLORS[marker]
+                    # color = self.COLORS[marker]
+                    color = self.marker_colours[marker]
                     gfxdraw.aacircle(self.display, x, y, self.marker_size//2, color)
                     gfxdraw.filled_circle(self.display, x, y, self.marker_size//2, color)
 
@@ -164,6 +169,21 @@ class PygameUI:
                     if event.key == pygame.K_q:
                         pygame.quit()
                         sys.exit(0)
+
+    def set_starting_player(self, player_starts: bool) -> None:
+        """
+        Initializes the marker colours based on who starts the game.
+        """
+        if player_starts:
+            self.marker_colours = {
+                Marker.PLAYER: self.COLOR_BLACK,
+                Marker.AI: self.COLOR_WHITE
+            }
+        else :
+            self.marker_colours = {
+                Marker.PLAYER: self.COLOR_WHITE,
+                Marker.AI: self.COLOR_BLACK
+            }
 
 
     def _event_loop(self):

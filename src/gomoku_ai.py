@@ -32,6 +32,9 @@ class GomokuAI:
         candidates_copy = candidates.copy()
         self.history_table = {}
 
+        if not candidates_copy:
+            return 9, 9
+
         for depth in range (1,50):
             try:
                 GomokuAI.minimax.calls = 0

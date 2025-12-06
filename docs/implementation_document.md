@@ -2,7 +2,11 @@
 
 ## Structure
 
+Details to come.
+
 ## Time complexity
+
+Details to come.
 
 ## Possible improvements
 
@@ -31,3 +35,10 @@ https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
 https://xinhhd.github.io/GomokuReport_11610320.pdf
 <br>
 https://en.wikipedia.org/wiki/Negamax
+<br>
+https://ieeexplore.ieee.org/document/42858
+<br>
+https://www.chessprogramming.org/History_Heuristic
+<br>
+https://people.csail.mit.edu/plaat/mtdf.html#abmem
+
