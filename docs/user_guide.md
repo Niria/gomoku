@@ -2,18 +2,18 @@
 
 ## Installation
 
-Clone the repository
+First clone the repository
 ```
 git clone git@github.com:Niria/gomoku.git
 ```
 
-Move to repository and install dependencies
+Then move to repository and install dependencies
 ```
 cd gomoku
 poetry install
 ```
 
-Launch the game
+To launch the game run the following command
 ```
 poetry run python3 src/index.py
 ```
@@ -26,7 +26,7 @@ In gomoku the player that starts the game uses black markers and their opponent 
 
 ### Gameplay
 
-![Pygame GUI](/docs/images/pygame_gui.png)
+<img src="/docs/images/pygame_gui.png" style="width:50%" alt="Image of gomoku pygame user interface.">
 
 Launching the game opens up the 20x20 board GUI in a pygame window.
 In gomoku markers can only be placed on top of the gridlines.
