@@ -314,3 +314,15 @@ class GameBoard:
         patterns.sort(key=lambda x: x[1], reverse=True)
 
         return patterns
+
+    def clone_board(self):
+        """Creates a copy of the board that can be passed to the AI."""
+        clone = GameBoard(self.size)
+        clone.board = [r[:] for r in self.board]
+        clone.move_history = self.move_history[:]
+        clone.zobrist_hash = self.zobrist_hash
+        clone.zobrist_table = self.zobrist_table
+        clone.player_patterns = self.player_patterns
+        clone.ai_patterns = self.ai_patterns
+
+        return clone

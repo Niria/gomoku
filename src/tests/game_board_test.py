@@ -54,7 +54,7 @@ class TestGameBoard(unittest.TestCase):
         # [0,0,0,2,0,0,0,0]    [0,0,0,2,2,0,0,0]
 
         old_value = -GameBoard.PATTERN_VALUES["01110"]*4
-        new_value = (2*GameBoard.PATTERN_VALUES["11000"] - GameBoard.PATTERN_VALUES["001112"])
+        new_value = (2*GameBoard.PATTERN_VALUES["01100"] - GameBoard.PATTERN_VALUES["00111"])
         correct_value = new_value - old_value
 
         self.assertEqual(correct_value, self.gameboard.get_move_value(8, 3, Marker.AI))

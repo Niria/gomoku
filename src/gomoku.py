@@ -1,71 +1,63 @@
 from game_board import GameBoard, Marker, Move
 from gomoku_ai import GomokuAI
-from helpers import char_to_number
+from pygame_ui import PygameUI
 
 
 class Gomoku:
     def __init__(self, size=20):
-        self.gameboard = GameBoard(size)
-        self.ai = GomokuAI()
-        self.players_turn = True
-        # self.current_value = 0
-        self.candidates: set[Move] = set()
+        self.size = size
+        self.ui = PygameUI(size)
+        self._reset()
 
+    def _reset(self) -> None:
+        """
+        Resets the game board state to its initial state.
+        """
+        self.gameboard = GameBoard(self.size)
+        self.ai = GomokuAI()
+        self.candidates: set[Move] = set()
+        self.players_turn = True
 
     def run(self) -> None:
         """
         Runs the gomoku gameplay loop.
-        :return:
         """
-        print(self.gameboard)
-        print()
+        running = True
+        while running:
+            game_over = False
+            self.ui.display_board(self.gameboard)
 
-        while True:
-            if self.players_turn:
-                user_input = input("X Y: ")
-                if user_input == "":
-                    break
-
-                try:
-                    col, row = user_input.split(" ")
-                    col = char_to_number(col)
-                    row = int(row)
-                except ValueError:
-                    print(f"Invalid input, X and Y must be between 0 and {self.gameboard.size - 1}")
-                    break
-
-                if not self.gameboard.valid_move(col, row):
-                    print(f"Invalid input, X and Y must be between 0 and {self.gameboard.size - 1}")
-                    continue
-                # print(f"value before player: {self.current_value}")
-                # self.current_value += self.gameboard.get_move_value(col, row, Marker.PLAYER)
-                # print(f"value after player: {self.current_value}")
-                # print(f"curr value: {self.current_value}")
-
-                self.gameboard.move(col, row, Marker.PLAYER)
-
-            else:
-                col, row = self.ai.find_ai_move(self.gameboard, self.candidates)
-                # print(f"value before AI: {self.current_value}")
-                # self.current_value += self.gameboard.get_move_value(col, row, Marker.AI)
-                # print(f"value after AI: {self.current_value}")
-                self.gameboard.move(col, row, Marker.AI)
-
-            if self.gameboard.win_state():
+            while not game_over:
                 if self.players_turn:
-                    print("Player won!")
+                    col, row = self.ui.get_player_move(self.gameboard)
+                    self.gameboard.move(col, row, Marker.PLAYER)
+
                 else:
-                    print("AI won!")
-                print(self.gameboard)
-                break
+                    board_copy = self.gameboard.clone_board()
+                    candidates_copy = self.candidates.copy()
+                    col, row = self.ui.get_ai_move(board_copy, self.ai, candidates_copy)
+                    self.gameboard.move(col, row, Marker.AI)
 
-            self.gameboard.update_candidates(self.candidates, col, row)
-            print(f"candidates: {self.candidates} move: ({col}, {row})")
+                if self.gameboard.win_state():
+                    winner = Marker.PLAYER if self.players_turn else Marker.AI
+                    restart_game = self.ui.show_winner(self.gameboard, winner)
 
-            if not self.players_turn:
-                print()
-                ai_col, ai_row = self.gameboard.move_history[-1]
-                print(f"AI chose: ({chr(ord("A")+ai_col)}, {ai_row})\n")
-                print(self.gameboard)
-            self.players_turn = not self.players_turn
-            print(f"history: {self.gameboard.move_history}")
+                    if restart_game:
+                        self._reset()
+                        game_over = True
+                        continue
+                    else:
+                        return
+
+                self.gameboard.update_candidates(self.candidates, col, row)
+                self.ui.display_board(self.gameboard)
+
+                print(f"candidates: {self.candidates} move: ({col}, {row})")
+
+                if not self.players_turn:
+                    print()
+                    ai_col, ai_row = self.gameboard.move_history[-1]
+                    print(f"AI chose: ({chr(ord("A")+ai_col)}, {ai_row})\n")
+                    print(self.gameboard)
+                self.players_turn = not self.players_turn
+                print(f"history: {self.gameboard.move_history}")
