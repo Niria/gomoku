@@ -2,8 +2,14 @@
 
 ## Installation
 
-Install dependencies
+Clone the repository
 ```
+git clone git@github.com:Niria/gomoku.git
+```
+
+Move to repository and install dependencies
+```
+cd gomoku
 poetry install
 ```
 

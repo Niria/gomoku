@@ -12,8 +12,14 @@ This project includes various optimization methods for the algorithm, such as a 
 
 ## Installation
 
-Install dependencies
+Clone the repository
 ```
+git clone git@github.com:Niria/gomoku.git
+```
+
+Move to repository and install dependencies
+```
+cd gomoku
 poetry install
 ```
 
