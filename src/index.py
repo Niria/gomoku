@@ -2,7 +2,7 @@ from gomoku import Gomoku
 
 
 def main():
-    gomoku = Gomoku(player_starts=False)
+    gomoku = Gomoku(player_starts=True)
     gomoku.run()
 
 
