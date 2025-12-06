@@ -1,5 +1,4 @@
 from typing import Optional
-
 import pygame
 from pygame import gfxdraw
 import threading
@@ -11,11 +10,6 @@ from gomoku_ai import GomokuAI
 class PygameUI:
     COLOR_WHITE = (255, 255, 255)
     COLOR_BLACK = (0, 0, 0)
-
-    COLORS = {
-        Marker.PLAYER: (0, 0, 0),
-        Marker.AI: (255, 255, 255)
-    }
 
     def __init__(self, size=20):
         pygame.init()
