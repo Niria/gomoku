@@ -2,10 +2,14 @@
 
 ### This week
 
-This week I tried my best to implement the changes we discussed in the zoom session on Monday.
+This week I tried my best to implement the changes we discussed during the zoom session last Monday.
+
 I removed the static branch pruning I had implemented last week. 
+The candidate list keeps expanding throughout the game, which means the branching factor can become very high later on in the game.
+
 I refactored minimax to once again have be split into max and min paths.
 I still need to work on further extracting logic out of minimax into helper methods to make it easier to follow.
+
 I believe I may have finally managed to fix the transposition table logic when minimizing by adding the lower bound flag when value is higher than beta_orig instead of beta.
 
 
