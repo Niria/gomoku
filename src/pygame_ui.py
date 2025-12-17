@@ -10,6 +10,9 @@ from gomoku_ai import GomokuAI
 class PygameUI:
     COLOR_WHITE = (255, 255, 255)
     COLOR_BLACK = (0, 0, 0)
+    COLOR_RECENT_PLAY = (200, 0, 0)
+    GRID_COLOR = (50, 50, 50)
+    LABEL_COLOR = (50, 50, 50)
 
     def __init__(self, size=20):
         pygame.init()
@@ -37,19 +40,38 @@ class PygameUI:
         """
         self.display.fill(self.background_colour)
         self._draw_grid()
+        self._draw_labels()
         self._draw_markers(gameboard)
 
 
     def _draw_grid(self) -> None:
         """
         Draws the gridlines.
-        :return:
         """
         for i in range(self.board_size):
             pos = i * self.grid_width
             offset = self.grid_width // 2 + self.board_padding
-            pygame.draw.line(self.display, (0,0,0), (offset, pos+offset), (self.display_width-offset, pos+offset), 2)
-            pygame.draw.line(self.display, (0,0,0), (pos+offset, offset), (pos+offset, self.display_height-offset), 2)
+            pygame.draw.line(self.display, self.GRID_COLOR, (offset, pos+offset),
+                             (self.display_width-offset, pos+offset), 2)
+            pygame.draw.line(self.display, self.GRID_COLOR, (pos+offset, offset),
+                             (pos+offset, self.display_height-offset), 2)
+
+    def _draw_labels(self) -> None:
+        """
+        Draws the row and column label numbers/letters.
+        """
+        for i in range(self.board_size):
+            pos = i * self.grid_width + self.grid_width // 2 + self.board_padding
+
+            col_char = chr(ord("A") + i)
+            label_text = self.font.render(col_char, True, self.LABEL_COLOR)
+            label_rect = label_text.get_rect(center=(pos, self.board_padding // 2))
+            self.display.blit(label_text, label_rect)
+
+            row_char = str(i)
+            label_text = self.font.render(row_char, True, self.LABEL_COLOR)
+            label_rect = label_text.get_rect(center=(self.board_padding // 2, pos))
+            self.display.blit(label_text, label_rect)
 
     def _draw_markers(self, gameboard: GameBoard) -> None:
         """
@@ -65,10 +87,9 @@ class PygameUI:
                     y = row * self.grid_width + self.grid_width // 2 + self.board_padding
 
                     if (col, row) == gameboard.move_history[-1]:
-                        gfxdraw.aacircle(self.display, x, y, self.marker_size//2+3, (200, 0, 0))
-                        gfxdraw.filled_circle(self.display, x, y, self.marker_size//2+3, (200, 0, 0))
+                        gfxdraw.aacircle(self.display, x, y, self.marker_size//2+3, self.COLOR_RECENT_PLAY)
+                        gfxdraw.filled_circle(self.display, x, y, self.marker_size//2+3, self.COLOR_RECENT_PLAY)
 
-                    # color = self.COLORS[marker]
                     color = self.marker_colours[marker]
                     gfxdraw.aacircle(self.display, x, y, self.marker_size//2, color)
                     gfxdraw.filled_circle(self.display, x, y, self.marker_size//2, color)
@@ -83,7 +104,7 @@ class PygameUI:
         self._draw_board(gameboard)
         pygame.display.flip()
 
-    def get_player_move(self, gameboard: GameBoard) -> Move:
+    def get_player_move(self, gameboard: GameBoard) -> Move | str:
         """
         Gets the player's next move. Returns the move the player clicks a valid empty space on the board.
         :param gameboard: Instance of GameBoard
@@ -96,6 +117,34 @@ class PygameUI:
                     pygame.quit()
                     sys.exit(0)
 
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        return "reset"
+                    if event.key == pygame.K_v:
+                        return "AI_match"
+                    if event.key == pygame.K_1:
+                        return "game_1"
+                    if event.key == pygame.K_2:
+                        return "game_2"
+                    if event.key == pygame.K_3:
+                        return "game_3"
+                    if event.key == pygame.K_4:
+                        return "game_4"
+                    if event.key == pygame.K_5:
+                        return "game_5"
+                    if event.key == pygame.K_6:
+                        return "game_6"
+                    if event.key == pygame.K_7:
+                        return "game_7"
+                    if event.key == pygame.K_8:
+                        return "game_8"
+                    if event.key == pygame.K_9:
+                        return "game_9"
+                    if event.key == pygame.K_0:
+                        return "game_0"
+                    if event.key == pygame.K_PLUS:
+                        return "game_+"
+
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     x, y = pygame.mouse.get_pos()
                     col = (x - self.board_padding) // self.grid_width
@@ -106,7 +155,8 @@ class PygameUI:
                     else:
                         print(f"Invalid move! {col}, {row}")
 
-    def get_ai_move(self, gameboard: GameBoard, ai: GomokuAI, candidates: set[Move]) -> Move:
+    def get_ai_move(self, gameboard: GameBoard, ai: GomokuAI, candidates: set[Move],
+                    marker: Marker) -> Move:
         """
         Gets the AI's next move. Starts a new thread for running the AI to
         prevent pygame from freezing.
@@ -116,7 +166,8 @@ class PygameUI:
         :return: AI's next move
         """
         ai_move = []
-        thread = threading.Thread(target=self._ai_thread, args=(gameboard, ai, candidates, ai_move))
+        thread = threading.Thread(target=self._ai_thread, args=(gameboard, ai, candidates,
+                                                                ai_move, marker))
         thread.daemon = True
         thread.start()
 
@@ -126,7 +177,8 @@ class PygameUI:
 
         return ai_move[0]
 
-    def _ai_thread(self, gameboard: GameBoard, ai: GomokuAI, candidates: set[Move], move: list[Move]) -> None:
+    def _ai_thread(self, gameboard: GameBoard, ai: GomokuAI, candidates: set[Move],
+                   move: list[Move], marker: Marker) -> None:
         """
         Helper method for running find_ai_move in a thread.
         :param gameboard: Instance of GameBoard
@@ -134,7 +186,7 @@ class PygameUI:
         :param candidates: Set of candidate moves
         :param move: Mutable list for storing the result
         """
-        move.append(ai.find_ai_move(gameboard, candidates))
+        move.append(ai.find_ai_move(gameboard, candidates, marker))
 
     def show_winner(self, gameboard: GameBoard, winner: Marker) -> Optional[bool]:
         """
@@ -145,9 +197,11 @@ class PygameUI:
         """
         self.display_board(gameboard)
         restart_st = " Press R to restart, Q to quit"
-        player_st = "Player won!" if winner == Marker.PLAYER else "AI won!"
+        player_st = "Black won!" if winner == Marker.PLAYER else "White won!"
         game_over_text = self.font.render(player_st+restart_st, True, (0,0,0))
-        self.display.blit(game_over_text, (self.board_padding, self.board_padding//2))
+        game_over_rect = game_over_text.get_rect(center=(self.display_width // 2,
+                                                         self.display_height - self.board_padding // 2))
+        self.display.blit(game_over_text, game_over_rect)
         pygame.display.flip()
 
         while True:

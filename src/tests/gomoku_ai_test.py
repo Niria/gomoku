@@ -18,77 +18,77 @@ class TestGomokuAi(unittest.TestCase):
     def test_AI_detects_horizontal_win(self):
         moves = [(5,5, Marker.AI), (6,5,Marker.AI), (7,5,Marker.AI), (8,5,Marker.AI)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 2)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 2)
         self.assertIn(move, [(4,5), (9,5)])
 
     def test_AI_detects_vertical_win(self):
         moves = [(5,5,Marker.AI), (5,6,Marker.AI), (5,7,Marker.AI), (5,8,Marker.AI)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 2)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 2)
         self.assertIn(move, [(5,4), (5,9)])
 
     def test_AI_detects_diagonal_win(self):
         moves = [(5,5,Marker.AI), (6,6,Marker.AI), (7,7,Marker.AI), (8,8,Marker.AI)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 2)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 2)
         self.assertIn(move, [(4,4), (9,9)])
 
     def test_AI_detects_reverse_diagonal_win(self):
         moves = [(5,5,Marker.AI), (4,6,Marker.AI), (3,7,Marker.AI), (2,8,Marker.AI)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 2)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 2)
         self.assertIn(move, [(6,4), (1,9)])
 
     def test_AI_blocks_player_blocked_four(self):
         moves = [(5,5,Marker.PLAYER), (6,5,Marker.PLAYER), (7,5,Marker.PLAYER), (8,5,Marker.PLAYER),
                  (9,5,Marker.AI)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 2)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 2)
         self.assertEqual(move, (4,5))
 
     def test_AI_blocks_player_open_three(self):
         moves = [(5,5,Marker.PLAYER), (6,5,Marker.PLAYER), (7,5,Marker.PLAYER)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 1)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 1)
         self.assertIn(move, [(4,5), (8,5)])
 
     def test_AI_blocks_player_split_three(self):
         moves = [(5,5,Marker.PLAYER), (6,5,Marker.PLAYER), (8,5,Marker.PLAYER)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 1)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 1)
         self.assertIn(move, [(4,5), (7,5), (9,5)])
 
     def test_AI_picks_win_over_block(self):
         moves = [(5,5,Marker.PLAYER), (6,5,Marker.PLAYER), (7,5,Marker.PLAYER), (8,5,Marker.PLAYER),
                  (5,7,Marker.AI), (6,7,Marker.AI), (7,7,Marker.AI), (8,7,Marker.AI)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 2)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 2)
         self.assertIn(move, [(4,7), (9,7)])
 
     def test_AI_blocks_open_three_over_making_own(self):
         moves = [(5,5,Marker.PLAYER), (6,5,Marker.PLAYER), (7,5,Marker.PLAYER),
                  (5,7,Marker.AI), (6,7,Marker.AI)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 2)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 2)
         self.assertIn(move, [(4,5), (8,5)])
 
     def test_AI_makes_open_four_over_blocked_four(self):
         moves = [(5,5,Marker.AI), (6,5,Marker.AI), (7,5,Marker.AI), (8,5,Marker.PLAYER),
                  (5,7,Marker.AI), (6,7,Marker.AI), (7,7,Marker.AI)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 2)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 2)
         self.assertIn(move, [(4,7), (8,7)])
 
     def test_AI_does_not_pick_winning_move_outside_board(self):
         moves = [(0,5,Marker.AI), (1,5,Marker.AI), (2,5,Marker.AI), (3,5,Marker.AI)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 2)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 2)
         self.assertEqual(move, (4,5))
 
     def test_AI_does_not_pick_blocking_move_outside_board(self):
         moves = [(0,0,Marker.PLAYER), (1,1,Marker.PLAYER), (2,2,Marker.PLAYER), (3,3,Marker.PLAYER)]
         self.setup_board(moves)
-        move = self.ai.find_ai_move(self.gameboard, self.candidates, 2)
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI,2)
         self.assertEqual(move, (4,4))
 
     def test_AI_finds_win_at_depth_5(self):
@@ -128,17 +128,17 @@ class TestGomokuAi(unittest.TestCase):
                  (8,4,Marker.PLAYER)]
         self.setup_board(moves)
 
-        mv1 = self.ai.find_ai_move(self.gameboard, self.candidates, 10.0)
+        mv1 = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 10.0)
         self.assertEqual(mv1, (8,5))
 
         self.setup_board([(8,5,Marker.AI), (9,5,Marker.PLAYER)])
 
-        mv2 = self.ai.find_ai_move(self.gameboard, self.candidates, 10.0)
+        mv2 = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 10.0)
         self.assertEqual(mv2, (8,8))
 
         self.setup_board([(8,8,Marker.AI), (8,9,Marker.PLAYER)])
 
-        mv3 = self.ai.find_ai_move(self.gameboard, self.candidates, 10.0)
+        mv3 = self.ai.find_ai_move(self.gameboard, self.candidates, Marker.AI, 10.0)
         self.assertEqual(mv3, (4,8))
 
         self.setup_board([(4,8,Marker.AI)])

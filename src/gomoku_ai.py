@@ -15,7 +15,7 @@ class GomokuAI:
         self.best_move_before_timeout = None
         self.history_table = {}
 
-    def find_ai_move(self, gameboard: GameBoard, candidates: set[Move],
+    def find_ai_move(self, gameboard: GameBoard, candidates: set[Move], marker: Marker,
                      turn_time_limit=10.0) -> Move:
         """
         Initiates the minimax with alpha-beta pruning
@@ -33,23 +33,32 @@ class GomokuAI:
         self.history_table = {}
 
         if not candidates_copy:
-            return 9, 9
+            center = gameboard.size // 2
+            return center, center
+
+        maximizing = marker == Marker.AI
 
         for depth in range (1,50):
             try:
                 GomokuAI.minimax.calls = 0
                 self.best_move_before_timeout = None
 
-                value, move = self.minimax(gameboard, alpha, beta, True, candidates_copy,
+                value, move = self.minimax(gameboard, alpha, beta, maximizing, candidates_copy,
                                            0, depth, start_time, turn_time_limit,
                                            depth)
 
                 best_move = move
                 print(f"Depth: {depth} done, best move: {best_move}, minimax calls: {GomokuAI.minimax.calls}")
 
-                if value >= gameboard.OPEN_FOUR * 0.8:
-                    print(f"Open four found, value: {value} move: {best_move}")
-                    break
+                value_threshold = gameboard.OPEN_FOUR * 0.8
+                if maximizing:
+                    if value >= value_threshold:
+                        print(f"Open four found, value: {value} move: {best_move}")
+                        break
+                else:
+                    if value <= -value_threshold:
+                        print(f"Open four found, value: {value} move: {best_move}")
+                        break
 
             except Timeout:
                 if self.best_move_before_timeout:
