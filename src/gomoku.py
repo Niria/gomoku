@@ -1,8 +1,8 @@
 from game_board import GameBoard, Marker, Move
 from gomoku_ai import GomokuAI
-from pygame_ui import PygameUI
+from pygame_ui import PygameUI, UserEvent
+from helpers import log
 
-from stored_gamestates import GAME_STATES
 
 class Gomoku:
     def __init__(self, size: int=20, player_starts: bool=True):
@@ -35,33 +35,27 @@ class Gomoku:
             while not game_over:
                 if self.players_turn and not ai_match:
                     move = self.ui.get_player_move(self.gameboard)
-                    if isinstance(move, str):
-                        if move == "reset":
+
+                    if isinstance(move, UserEvent):
+                        if move == UserEvent.RESET:
                             self._reset()
                             game_over = True
-                            continue
-                        elif move == "AI_match":
-                            ai_match = True
-                        elif move.startswith("game_"):
-                            key = move.split("_")[1]
-                            self.load_game(key)
                         continue
-
-                    col, row = move
-                    self.gameboard.move(col, row, Marker.PLAYER)
+                    else:
+                        col, row = move
+                        self.gameboard.move(col, row, Marker.PLAYER)
 
                 else:
                     board_copy = self.gameboard.clone_board()
                     candidates_copy = self.candidates.copy()
-                    curr_marker = Marker.PLAYER if self.players_turn else Marker.AI
-                    col, row = self.ui.get_ai_move(board_copy, self.ai, candidates_copy, curr_marker)
-                    self.gameboard.move(col, row, curr_marker)
+                    col, row = self.ui.get_ai_move(board_copy, self.ai, candidates_copy)
+                    self.gameboard.move(col, row, Marker.AI)
 
                 if self.gameboard.win_state():
                     winner = Marker.PLAYER if self.players_turn else Marker.AI
-                    restart_game = self.ui.show_winner(self.gameboard, winner)
+                    event = self.ui.show_winner(self.gameboard, winner)
 
-                    if restart_game:
+                    if event == UserEvent.RESET:
                         self._reset()
                         game_over = True
                         continue
@@ -71,32 +65,17 @@ class Gomoku:
                 self.gameboard.update_candidates(self.candidates, col, row)
                 self.ui.display_board(self.gameboard)
 
-                print(f"candidates: {self.candidates} move: ({col}, {row})")
 
                 if not self.players_turn:
-                    print()
-                    ai_col, ai_row = self.gameboard.move_history[-1]
-                    print(f"AI chose: ({chr(ord("A")+ai_col)}, {ai_row})\n")
-                    print(self.gameboard)
+                    self.turn_log()
+
                 self.players_turn = not self.players_turn
-                print(f"history: {self.gameboard.move_history}")
 
-    def load_game(self, state_key: str) -> None:
-        """
-        Loads a game state from stored_gamestates.py.
-        :param state_key:
-        :return:
-        """
-        if state_key not in GAME_STATES:
-            return
+    def turn_log(self) -> None:
+        """Outputs details of the previous player and AI turn."""
+        ai_col, ai_row = self.gameboard.move_history[-1]
+        log(f"candidates: {self.candidates}")
+        log(f"\nAI chose: ({chr(ord('A') + ai_col)}, {ai_row})\n")
+        log(self.gameboard)
+        log(f"history: {self.gameboard.move_history}")
 
-        self._reset()
-        moves = GAME_STATES[state_key]["moves"]
-
-        print(moves[0])
-        for col, row, marker in moves:
-            self.gameboard.move(col, row, marker)
-            self.gameboard.update_candidates(self.candidates, col, row)
-
-        self.players_turn = GAME_STATES[state_key]["turn"] == Marker.PLAYER
-        self.ui.display_board(self.gameboard)

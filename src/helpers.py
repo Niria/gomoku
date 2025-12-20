@@ -1,16 +1,6 @@
 from random import getrandbits
 
-def function_call_counter(func):
-    """
-    Used for calculating the number of times a function has been called
-    :param func: Function to be called
-    :return: Wrapper function
-    """
-    def wrapper(*args, **kwargs):
-        wrapper.calls += 1
-        return func(*args, **kwargs)
-    wrapper.calls = 0
-    return wrapper
+DEBUG_MODE = False
 
 
 def generate_zobrist_table(size):
@@ -35,3 +25,8 @@ def char_to_number(char):
     :return: Int
     """
     return ord(char.lower()) - ord('a')
+
+def log(*args, **kwargs):
+    """Wrapper for outputting debug information to terminal"""
+    if DEBUG_MODE:
+        print(*args, **kwargs)

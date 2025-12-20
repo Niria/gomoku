@@ -11,28 +11,32 @@ class Marker(IntEnum):
 
 
 class GameBoard:
-    WIN_VALUE = 10000000
-    OPEN_FOUR = 1000000
-    OPEN_THREE = 50000
+    WIN_VALUE = 10_000_000
+    OPEN_FOUR = 1_000_000
+    OPEN_THREE = 50_000
+    HIGH_THREAT_THRESHOLD = 50_000
+    MED_THREAT_THRESHOLD = 25_000
+    HIGH_THREAT_DEF_MULTIPLIER = 4
+    MED_THREAT_DEF_MULTIPLIER = 2
 
     PATTERN_VALUES = {
         "11111": WIN_VALUE,
         "011110": OPEN_FOUR,
-        "01111": 100000,
-        "11110": 100000,
-        "10111": 75000,
-        "11011": 75000,
-        "11101": 75000,
+        "01111": 100_000,
+        "11110": 100_000,
+        "10111": 75_000,
+        "11011": 75_000,
+        "11101": 75_000,
         "01110": OPEN_THREE,
-        "0101010": 50000,
-        "010110": 50000,
-        "011010": 50000,
-        "11100": 25000,
-        "00111": 25000,
-        "1110": 10000,
-        "0111": 10000,
-        "01011": 1000,
-        "11010": 1000,
+        "0101010": 50_000,
+        "010110": 50_000,
+        "011010": 50_000,
+        "11100": 25_000,
+        "00111": 25_000,
+        "1110": 10_000,
+        "0111": 10_000,
+        "01011": 1_000,
+        "11010": 1_000,
         "01100": 400,
         "00110": 400,
         "01010": 300,
@@ -207,8 +211,10 @@ class GameBoard:
                 ai_value = value
                 break
 
-        if player_value >= self.OPEN_THREE:
-            return ai_value - int(player_value*4)
+        if player_value >= self.HIGH_THREAT_THRESHOLD:
+            return ai_value - int(player_value * self.HIGH_THREAT_DEF_MULTIPLIER)
+        elif player_value >= self.MED_THREAT_THRESHOLD:
+            return ai_value - int(player_value * self.MED_THREAT_DEF_MULTIPLIER)
         else:
             return ai_value - int(player_value)
 

@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 import pygame
 from pygame import gfxdraw
@@ -6,6 +7,9 @@ import sys
 from game_board import GameBoard, Marker, Move
 from gomoku_ai import GomokuAI
 
+
+class UserEvent(Enum):
+    RESET = 0
 
 class PygameUI:
     COLOR_WHITE = (255, 255, 255)
@@ -104,7 +108,7 @@ class PygameUI:
         self._draw_board(gameboard)
         pygame.display.flip()
 
-    def get_player_move(self, gameboard: GameBoard) -> Move | str:
+    def get_player_move(self, gameboard: GameBoard) -> Move | UserEvent:
         """
         Gets the player's next move. Returns the move the player clicks a valid empty space on the board.
         :param gameboard: Instance of GameBoard
@@ -119,31 +123,7 @@ class PygameUI:
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
-                        return "reset"
-                    if event.key == pygame.K_v:
-                        return "AI_match"
-                    if event.key == pygame.K_1:
-                        return "game_1"
-                    if event.key == pygame.K_2:
-                        return "game_2"
-                    if event.key == pygame.K_3:
-                        return "game_3"
-                    if event.key == pygame.K_4:
-                        return "game_4"
-                    if event.key == pygame.K_5:
-                        return "game_5"
-                    if event.key == pygame.K_6:
-                        return "game_6"
-                    if event.key == pygame.K_7:
-                        return "game_7"
-                    if event.key == pygame.K_8:
-                        return "game_8"
-                    if event.key == pygame.K_9:
-                        return "game_9"
-                    if event.key == pygame.K_0:
-                        return "game_0"
-                    if event.key == pygame.K_PLUS:
-                        return "game_+"
+                        return UserEvent.RESET
 
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     x, y = pygame.mouse.get_pos()
@@ -155,8 +135,7 @@ class PygameUI:
                     else:
                         print(f"Invalid move! {col}, {row}")
 
-    def get_ai_move(self, gameboard: GameBoard, ai: GomokuAI, candidates: set[Move],
-                    marker: Marker) -> Move:
+    def get_ai_move(self, gameboard: GameBoard, ai: GomokuAI, candidates: set[Move]) -> Move:
         """
         Gets the AI's next move. Starts a new thread for running the AI to
         prevent pygame from freezing.
@@ -167,7 +146,7 @@ class PygameUI:
         """
         ai_move = []
         thread = threading.Thread(target=self._ai_thread, args=(gameboard, ai, candidates,
-                                                                ai_move, marker))
+                                                                ai_move))
         thread.daemon = True
         thread.start()
 
@@ -177,8 +156,7 @@ class PygameUI:
 
         return ai_move[0]
 
-    def _ai_thread(self, gameboard: GameBoard, ai: GomokuAI, candidates: set[Move],
-                   move: list[Move], marker: Marker) -> None:
+    def _ai_thread(self, gameboard: GameBoard, ai: GomokuAI, candidates: set[Move], move: list[Move]) -> None:
         """
         Helper method for running find_ai_move in a thread.
         :param gameboard: Instance of GameBoard
@@ -186,9 +164,9 @@ class PygameUI:
         :param candidates: Set of candidate moves
         :param move: Mutable list for storing the result
         """
-        move.append(ai.find_ai_move(gameboard, candidates, marker))
+        move.append(ai.find_ai_move(gameboard, candidates))
 
-    def show_winner(self, gameboard: GameBoard, winner: Marker) -> Optional[bool]:
+    def show_winner(self, gameboard: GameBoard, winner: Marker) -> Optional[UserEvent]:
         """
         Displays the winner of the game in the pygame window.
         :param gameboard: Instance of GameBoard
@@ -213,7 +191,7 @@ class PygameUI:
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
-                        return True
+                        return UserEvent.RESET
                     if event.key == pygame.K_q:
                         pygame.quit()
                         sys.exit(0)

@@ -1,8 +1,11 @@
 import time
 from typing import Optional
-
 from game_board import GameBoard, Marker, Move
-from helpers import function_call_counter
+from helpers import log
+
+
+class Timeout(Exception):
+    pass
 
 
 class GomokuAI:
@@ -14,9 +17,9 @@ class GomokuAI:
         self.transposition_table = {}
         self.best_move_before_timeout = None
         self.history_table = {}
+        self.nodes_searched = 0
 
-    def find_ai_move(self, gameboard: GameBoard, candidates: set[Move], marker: Marker,
-                     turn_time_limit=10.0) -> Move:
+    def find_ai_move(self, gameboard: GameBoard, candidates: set[Move], turn_time_limit=10.0) -> Move:
         """
         Initiates the minimax with alpha-beta pruning
         :param gameboard: Instance of GameBoard
@@ -36,39 +39,31 @@ class GomokuAI:
             center = gameboard.size // 2
             return center, center
 
-        maximizing = marker == Marker.AI
-
         for depth in range (1,50):
             try:
-                GomokuAI.minimax.calls = 0
+                self.nodes_searched = 0
                 self.best_move_before_timeout = None
 
-                value, move = self.minimax(gameboard, alpha, beta, maximizing, candidates_copy,
+                value, move = self.minimax(gameboard, alpha, beta, True, candidates_copy,
                                            0, depth, start_time, turn_time_limit,
                                            depth)
 
                 best_move = move
-                print(f"Depth: {depth} done, best move: {best_move}, minimax calls: {GomokuAI.minimax.calls}")
+                log(f"Depth: {depth} done, best move: {best_move}, minimax calls: {self.nodes_searched}")
 
                 value_threshold = gameboard.OPEN_FOUR * 0.8
-                if maximizing:
-                    if value >= value_threshold:
-                        print(f"Open four found, value: {value} move: {best_move}")
-                        break
-                else:
-                    if value <= -value_threshold:
-                        print(f"Open four found, value: {value} move: {best_move}")
-                        break
+                if value >= value_threshold:
+                    log(f"Open four found, value: {value} move: {best_move}")
+                    break
 
             except Timeout:
                 if self.best_move_before_timeout:
                     best_move = self.best_move_before_timeout
-                print(f"Depth {depth} timed out, best move: {best_move}, minimax calls: {GomokuAI.minimax.calls}")
+                log(f"Depth {depth} timed out, best move: {best_move}, minimax calls: {self.nodes_searched}")
                 break
 
         return best_move
 
-    @function_call_counter
     def minimax(self, gameboard: GameBoard, alpha: float, beta: float, maximizing: bool,
                 candidates: set[Move], parent_value: int, depth: int, start_time: float,
                 turn_time_limit: float, root_depth: int | None=None) -> tuple[int, Move | None]:
@@ -86,8 +81,11 @@ class GomokuAI:
         :param root_depth: The depth the search was initially started with
         :return:
         """
-        if time.time() - start_time >= turn_time_limit:
-            raise Timeout()
+        if (self.nodes_searched & 1023) == 0:
+            if time.time() - start_time >= turn_time_limit:
+                raise Timeout()
+
+        self.nodes_searched += 1
 
         alpha_orig = alpha
         beta_orig = beta
@@ -235,5 +233,3 @@ class GomokuAI:
         return ordered_moves
 
 
-class Timeout(Exception):
-    pass
