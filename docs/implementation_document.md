@@ -71,4 +71,6 @@ https://ieeexplore.ieee.org/document/42858
 https://www.chessprogramming.org/History_Heuristic
 <br>
 https://people.csail.mit.edu/plaat/mtdf.html#abmem
+<br>
+https://webdocs.cs.ualberta.ca/~mmueller/courses/2014-AAAI-games-tutorial/slides/AAAI-14-Tutorial-Games-3-AlphaBeta.pdf
 
