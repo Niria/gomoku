@@ -1,11 +1,11 @@
 from game_board import GameBoard, Marker, Move
 from gomoku_ai import GomokuAI
-from pygame_ui import PygameUI, UserEvent
 from helpers import log
+from pygame_ui import PygameUI, UserEvent
 
 
 class Gomoku:
-    def __init__(self, size: int=20, player_starts: bool=True):
+    def __init__(self, size: int = 20, player_starts: bool = True):
         self.size = size
         self.ui = PygameUI(size)
         self.player_starts = player_starts
@@ -65,7 +65,6 @@ class Gomoku:
                 self.gameboard.update_candidates(self.candidates, col, row)
                 self.ui.display_board(self.gameboard)
 
-
                 if not self.players_turn:
                     self.turn_log()
 
@@ -78,4 +77,3 @@ class Gomoku:
         log(f"\nAI chose: ({chr(ord('A') + ai_col)}, {ai_row})\n")
         log(self.gameboard)
         log(f"history: {self.gameboard.move_history}")
-

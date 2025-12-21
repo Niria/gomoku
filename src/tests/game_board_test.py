@@ -1,6 +1,7 @@
-import unittest
-from game_board import GameBoard, Marker
 import random
+import unittest
+
+from game_board import GameBoard, Marker
 
 random.seed(42)
 
@@ -24,7 +25,7 @@ class TestGameBoard(unittest.TestCase):
             heuristic_value += self.gameboard.get_row_value(column)
 
         diag_starts = [(0, col) for col in range(size)] + \
-                       [(row, 0) for row in range(1, size)]
+                      [(row, 0) for row in range(1, size)]
 
         for start_row, start_col in diag_starts:
             line = []
@@ -36,7 +37,7 @@ class TestGameBoard(unittest.TestCase):
             heuristic_value += self.gameboard.get_row_value(line)
 
         reverse_diag_starts = [(0, col) for col in range(size)] + \
-                       [(row, size - 1) for row in range(1, size)]
+                              [(row, size - 1) for row in range(1, size)]
 
         for start_row, start_col in reverse_diag_starts:
             line = []
@@ -109,28 +110,27 @@ class TestGameBoard(unittest.TestCase):
         # [0,0,0,0,0,0,0,0]    [0,0,0,2,0,0,0,0]
         # [0,0,0,2,0,0,0,0]    [0,0,0,2,2,0,0,0]
 
-        old_value = -GameBoard.PATTERN_VALUES["01110"]*4
-        new_value = (2*GameBoard.PATTERN_VALUES["01100"] - GameBoard.PATTERN_VALUES["00111"]*2)
+        old_value = -GameBoard.PATTERN_VALUES["01110"] * 4
+        new_value = (2 * GameBoard.PATTERN_VALUES["01100"] - GameBoard.PATTERN_VALUES["00111"] * 2)
         correct_value = new_value - old_value
 
         self.assertEqual(correct_value, self.gameboard.get_move_value(8, 3, Marker.AI))
 
-    def test_get_rows_containing_move_returns_correct_rows(self):
-        self.gameboard.board[3][5] = Marker.PLAYER
-        self.gameboard.board[3][6] = Marker.PLAYER
-        self.gameboard.board[3][7] = Marker.PLAYER
-        self.gameboard.board[4][7] = Marker.AI
-        self.gameboard.board[4][8] = Marker.AI
+    def test_incremental_move_value_heuristic_matches_static_board_heuristic(self):
+        current_value = 0
+        moves = [(c, r) for c in range(20) for r in range(20)]
+        random.shuffle(moves)
 
-        correct_rows = [
-            [0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,2,0,0,0,0,0,0,0],
-        ]
-        rows = self.gameboard.get_rows_that_contain_move(8, 3)
-        for i,row in enumerate(rows):
-            self.assertListEqual(correct_rows[i], [int(n) for n in row[0]])
+        for i, move in enumerate(moves):
+            col, row = move
+
+            marker = Marker.PLAYER if i % 2 == 0 else Marker.AI
+            delta = self.gameboard.get_move_value(col, row, marker)
+            self.gameboard.move(col, row, marker)
+            current_value += delta
+            board_value = self.calculate_static_board_heuristic_value()
+
+            self.assertEqual(current_value, board_value)
 
     def test_get_row_value_returns_correct_value(self):
         row = [0, 2, 2, 2, 0]
@@ -158,18 +158,37 @@ class TestGameBoard(unittest.TestCase):
     def test_valid_coordinate_in_bounds_returns_true(self):
         self.assertTrue(self.gameboard.valid_coordinate(0, 0))
 
+    def test_get_rows_that_contain_move_returns_correct_rows(self):
+        self.gameboard.board[3][5] = Marker.PLAYER
+        self.gameboard.board[3][6] = Marker.PLAYER
+        self.gameboard.board[3][7] = Marker.PLAYER
+        self.gameboard.board[4][7] = Marker.AI
+        self.gameboard.board[4][8] = Marker.AI
+
+        correct_rows = [
+            [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+        ]
+        rows = self.gameboard.get_rows_that_contain_move(8, 3)
+        for i, row in enumerate(rows):
+            self.assertListEqual(correct_rows[i], [int(n) for n in row[0]])
 
     def test_update_candidates_returns_correct_list(self):
         self.gameboard.board[5][5] = Marker.PLAYER
-        old_candidates = {(5,5), (4,5)}
-        added_candidates = [(3,4), (5,4), (3,6), (5,6), (4,4), (3,5), (4,6), (2,3), (6,3), (2,7), (6,7), (4,3), (2,5), (6,5), (4,7)]
-        self.assertListEqual(added_candidates, self.gameboard.update_candidates(old_candidates, 4, 5))
+        old_candidates = {(5, 5), (4, 5)}
+        added_candidates = [(3, 4), (5, 4), (3, 6), (5, 6), (4, 4), (3, 5), (4, 6), (2, 3), (6, 3),
+                            (2, 7), (6, 7), (4, 3), (2, 5), (6, 5), (4, 7)]
+        self.assertListEqual(added_candidates,
+                             self.gameboard.update_candidates(old_candidates, 4, 5))
 
     def test_update_candidates_returns_correct_list_with_corner_move(self):
         self.gameboard.board[1][0] = Marker.AI
-        old_candidates = {(0,0)}
-        added_candidates = [(1,1), (1,0), (2,2), (2,0), (0,2)]
-        self.assertListEqual(added_candidates, self.gameboard.update_candidates(old_candidates, 0, 0))
+        old_candidates = {(0, 0)}
+        added_candidates = [(1, 1), (1, 0), (2, 2), (2, 0), (0, 2)]
+        self.assertListEqual(added_candidates,
+                             self.gameboard.update_candidates(old_candidates, 0, 0))
 
     def test_clone_board_returns_exact_clone(self):
         self.gameboard.move(5, 5, Marker.PLAYER)
@@ -208,19 +227,3 @@ class TestGameBoard(unittest.TestCase):
         hash2 = self.gameboard.zobrist_hash
 
         self.assertNotEqual(hash1, hash2)
-
-    def test_incremental_move_value_heuristic_matches_static_board_heuristic(self):
-        current_value = 0
-        moves = [(c, r) for c in range(20) for r in range(20)]
-        random.shuffle(moves)
-
-        for i, move in enumerate(moves):
-            col, row = move
-
-            marker = Marker.PLAYER if i % 2 == 0 else Marker.AI
-            delta = self.gameboard.get_move_value(col, row, marker)
-            self.gameboard.move(col, row, marker)
-            current_value += delta
-            board_value = self.calculate_static_board_heuristic_value()
-
-            self.assertEqual(current_value, board_value)

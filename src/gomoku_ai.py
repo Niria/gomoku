@@ -1,5 +1,6 @@
 import time
 from typing import Optional
+
 from game_board import GameBoard, Marker, Move
 from helpers import log
 
@@ -19,7 +20,8 @@ class GomokuAI:
         self.history_table = {}
         self.nodes_searched = 0
 
-    def find_ai_move(self, gameboard: GameBoard, candidates: set[Move], turn_time_limit=10.0) -> Move:
+    def find_ai_move(self, gameboard: GameBoard, candidates: set[Move],
+                     turn_time_limit=10.0) -> Move:
         """
         Initiates the minimax with alpha-beta pruning. The AI is always trying to maximize the
         heuristic value of the board. Uses iterative deepening with a default
@@ -42,7 +44,7 @@ class GomokuAI:
             center = gameboard.size // 2
             return center, center
 
-        for depth in range (1,50):
+        for depth in range(1, 50):
             try:
                 self.nodes_searched = 0
                 self.best_move_before_timeout = None
@@ -52,7 +54,8 @@ class GomokuAI:
                                            depth)
 
                 best_move = move
-                log(f"Depth: {depth} done, best move: {best_move}, minimax calls: {self.nodes_searched}")
+                log(f"Depth: {depth} done, best move: {best_move}, minimax calls: "
+                    f"{self.nodes_searched}")
 
                 value_threshold = gameboard.OPEN_FOUR * 0.8
                 if value >= value_threshold:
@@ -62,14 +65,15 @@ class GomokuAI:
             except Timeout:
                 if self.best_move_before_timeout:
                     best_move = self.best_move_before_timeout
-                log(f"Depth {depth} timed out, best move: {best_move}, minimax calls: {self.nodes_searched}")
+                log(f"Depth {depth} timed out, best move: {best_move}, minimax cal"
+                    f"ls: {self.nodes_searched}")
                 break
 
         return best_move
 
     def minimax(self, gameboard: GameBoard, alpha: float, beta: float, maximizing: bool,
                 candidates: set[Move], parent_value: int, depth: int, start_time: float,
-                turn_time_limit: float, root_depth: int | None=None) -> tuple[int, Move | None]:
+                turn_time_limit: float, root_depth: int | None = None) -> tuple[int, Move | None]:
         """
         Minimax algorithm with alpha-beta pruning that has been further optimized with improved
         move ordering, a transposition table and null window search.
@@ -136,10 +140,11 @@ class GomokuAI:
                 try:
                     if i == 0 or depth < 4:
                         value, _ = self.minimax(gameboard, alpha, beta, not maximizing, candidates,
-                                            new_value, depth - 1, start_time, turn_time_limit,
-                                            root_depth)
+                                                new_value, depth - 1, start_time, turn_time_limit,
+                                                root_depth)
                     else:
-                        value, _ = self.minimax(gameboard, alpha, alpha+1, not maximizing, candidates,
+                        value, _ = self.minimax(gameboard, alpha, alpha + 1, not maximizing,
+                                                candidates,
                                                 new_value, depth - 1, start_time, turn_time_limit,
                                                 root_depth)
 
@@ -164,7 +169,8 @@ class GomokuAI:
                 alpha = max(alpha, best_value)
 
                 if alpha >= beta:
-                    self.history_table[best_move] = self.history_table.get(best_move, 0) + 2**depth
+                    self.history_table[best_move] = self.history_table.get(best_move,
+                                                                           0) + 2 ** depth
                     break
 
         else:
@@ -196,7 +202,8 @@ class GomokuAI:
                 beta = min(beta, best_value)
 
                 if alpha >= beta:
-                    self.history_table[best_move] = self.history_table.get(best_move, 0) + 2**depth
+                    self.history_table[best_move] = self.history_table.get(best_move,
+                                                                           0) + 2 ** depth
                     break
 
         if best_value <= alpha_orig:
@@ -235,5 +242,3 @@ class GomokuAI:
         ordered_moves = [m[0] for m in sorted_candidates]
 
         return ordered_moves
-
-

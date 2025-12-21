@@ -40,6 +40,7 @@ This search can last up to 10 seconds, but can be nearly instantaneous if the AI
 Currently, there's no way to adjust game settings in the GUI. 
 If you want to let the AI start, you can edit the `player_starts` bool flag in `gomoku.py`.
 If you want to increase or decrease the AI timer, you can do it manually by editing `turn_time_limit` in ``gomoku_ai.py``.
+Debug print logging is disabled by default, if you want to enable it, set `DEBUG_MODE=True` in `helpers.py`.
 
 The game continues until either the player or the AI gets five in a row.
 Once the game is over, you can press R to restart the game from a clean board or Q to quit the game.
@@ -48,5 +49,5 @@ Once the game is over, you can press R to restart the game from a clean board or
 
 You can run the tests with the command
 ```
-poetry run pytest src/
+poetry run pytest
 ```

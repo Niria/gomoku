@@ -1,15 +1,18 @@
+import sys
+import threading
 from enum import Enum
 from typing import Optional
+
 import pygame
 from pygame import gfxdraw
-import threading
-import sys
+
 from game_board import GameBoard, Marker, Move
 from gomoku_ai import GomokuAI
 
 
 class UserEvent(Enum):
     RESET = 0
+
 
 class PygameUI:
     COLOR_WHITE = (255, 255, 255)
@@ -25,8 +28,8 @@ class PygameUI:
         self.board_padding = 40
         self.board_width = size * self.grid_width
         self.board_height = size * self.grid_width
-        self.display_width = self.board_width + 2*self.board_padding
-        self.display_height = self.board_height + 2*self.board_padding
+        self.display_width = self.board_width + 2 * self.board_padding
+        self.display_height = self.board_height + 2 * self.board_padding
         self.marker_size = 36
         self.background_colour = (190, 150, 105)
         self.marker_colours = {}
@@ -47,7 +50,6 @@ class PygameUI:
         self._draw_labels()
         self._draw_markers(gameboard)
 
-
     def _draw_grid(self) -> None:
         """
         Draws the gridlines.
@@ -55,10 +57,10 @@ class PygameUI:
         for i in range(self.board_size):
             pos = i * self.grid_width
             offset = self.grid_width // 2 + self.board_padding
-            pygame.draw.line(self.display, self.GRID_COLOR, (offset, pos+offset),
-                             (self.display_width-offset, pos+offset), 2)
-            pygame.draw.line(self.display, self.GRID_COLOR, (pos+offset, offset),
-                             (pos+offset, self.display_height-offset), 2)
+            pygame.draw.line(self.display, self.GRID_COLOR, (offset, pos + offset),
+                             (self.display_width - offset, pos + offset), 2)
+            pygame.draw.line(self.display, self.GRID_COLOR, (pos + offset, offset),
+                             (pos + offset, self.display_height - offset), 2)
 
     def _draw_labels(self) -> None:
         """
@@ -91,12 +93,14 @@ class PygameUI:
                     y = row * self.grid_width + self.grid_width // 2 + self.board_padding
 
                     if (col, row) == gameboard.move_history[-1]:
-                        gfxdraw.aacircle(self.display, x, y, self.marker_size//2+3, self.COLOR_RECENT_PLAY)
-                        gfxdraw.filled_circle(self.display, x, y, self.marker_size//2+3, self.COLOR_RECENT_PLAY)
+                        gfxdraw.aacircle(self.display, x, y, self.marker_size // 2 + 3,
+                                         self.COLOR_RECENT_PLAY)
+                        gfxdraw.filled_circle(self.display, x, y, self.marker_size // 2 + 3,
+                                              self.COLOR_RECENT_PLAY)
 
                     color = self.marker_colours[marker]
-                    gfxdraw.aacircle(self.display, x, y, self.marker_size//2, color)
-                    gfxdraw.filled_circle(self.display, x, y, self.marker_size//2, color)
+                    gfxdraw.aacircle(self.display, x, y, self.marker_size // 2, color)
+                    gfxdraw.filled_circle(self.display, x, y, self.marker_size // 2, color)
 
     def display_board(self, gameboard: GameBoard) -> None:
         """
@@ -110,7 +114,8 @@ class PygameUI:
 
     def get_player_move(self, gameboard: GameBoard) -> Move | UserEvent:
         """
-        Gets the player's next move. Returns the move the player clicks a valid empty space on the board.
+        Gets the player's next move. Returns the move the player clicks a valid empty space on
+        the board.
         :param gameboard: Instance of GameBoard
         :return: Player's next move
         """
@@ -156,7 +161,8 @@ class PygameUI:
 
         return ai_move[0]
 
-    def _ai_thread(self, gameboard: GameBoard, ai: GomokuAI, candidates: set[Move], move: list[Move]) -> None:
+    def _ai_thread(self, gameboard: GameBoard, ai: GomokuAI, candidates: set[Move],
+                   move: list[Move]) -> None:
         """
         Helper method for running find_ai_move in a thread.
         :param gameboard: Instance of GameBoard
@@ -176,9 +182,10 @@ class PygameUI:
         self.display_board(gameboard)
         restart_st = " Press R to restart, Q to quit"
         player_st = "Black won!" if winner == Marker.PLAYER else "White won!"
-        game_over_text = self.font.render(player_st+restart_st, True, (0,0,0))
+        game_over_text = self.font.render(player_st + restart_st, True, (0, 0, 0))
         game_over_rect = game_over_text.get_rect(center=(self.display_width // 2,
-                                                         self.display_height - self.board_padding // 2))
+                                                         self.display_height - self.board_padding
+                                                         // 2))
         self.display.blit(game_over_text, game_over_rect)
         pygame.display.flip()
 
@@ -205,12 +212,11 @@ class PygameUI:
                 Marker.PLAYER: self.COLOR_BLACK,
                 Marker.AI: self.COLOR_WHITE
             }
-        else :
+        else:
             self.marker_colours = {
                 Marker.PLAYER: self.COLOR_WHITE,
                 Marker.AI: self.COLOR_BLACK
             }
-
 
     def _event_loop(self):
         for event in pygame.event.get():

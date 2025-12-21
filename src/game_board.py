@@ -1,8 +1,9 @@
 from enum import IntEnum
+
 from helpers import generate_zobrist_table
 
-
 Move = tuple[int, int]
+
 
 class Marker(IntEnum):
     EMPTY = 0
@@ -55,8 +56,8 @@ class GameBoard:
         Marker.AI: "O",
     }
 
-    CANDIDATE_POSITIONS = [(-1,-1), (1,-1), (-1,1), (1,1), (0,-1), (-1,0), (1,0), (0,1),
-                            (-2,-2), (2,-2), (-2,2), (2,2), (0,-2), (-2,0), (2,0), (0,2)]
+    CANDIDATE_POSITIONS = [(-1, -1), (1, -1), (-1, 1), (1, 1), (0, -1), (-1, 0), (1, 0), (0, 1),
+                           (-2, -2), (2, -2), (-2, 2), (2, 2), (0, -2), (-2, 0), (2, 0), (0, 2)]
 
     def __init__(self, size: int):
         self.size = size
@@ -67,12 +68,11 @@ class GameBoard:
         self.player_patterns = self.precompute_player_patterns()
         self.ai_patterns = self.precompute_ai_patterns()
 
-
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         board = "    "
-        board += " ".join([chr(n) for n in range(65,85)])
+        board += " ".join([chr(n) for n in range(65, 85)])
         board += "\n"
-        for i,row in enumerate(self.board):
+        for i, row in enumerate(self.board):
             board += f"{i:3} "
             for pos in row:
                 board += self.SYMBOLS[pos] + " "
@@ -128,14 +128,13 @@ class GameBoard:
             c = col - dx
             r = row - dy
             while self.valid_coordinate(c, r) and self.board[r][c] == marker:
-                count +=1
+                count += 1
                 c -= dx
                 r -= dy
 
             if count >= 5:
                 return True
         return False
-
 
     def get_move_value(self, col: int, row: int, marker: Marker) -> int:
         """

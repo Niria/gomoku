@@ -1,6 +1,6 @@
 from random import getrandbits
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 
 def generate_zobrist_table(size):
@@ -13,12 +13,13 @@ def generate_zobrist_table(size):
 
     for row in range(size):
         for col in range(size):
-            for marker in range(1,3):
+            for marker in range(1, 3):
                 table[col][row][marker] = getrandbits(64)
 
     return table
 
-def char_to_number(char):
+
+def char_to_number(char):  # pragma: no cover
     """
     Converts a character into an integer
     :param char: Character to be converted
@@ -26,7 +27,8 @@ def char_to_number(char):
     """
     return ord(char.lower()) - ord('a')
 
-def log(*args, **kwargs):
+
+def log(*args, **kwargs):  # pragma: no cover
     """Wrapper for outputting debug information to terminal"""
     if DEBUG_MODE:
         print(*args, **kwargs)

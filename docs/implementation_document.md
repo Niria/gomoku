@@ -34,6 +34,8 @@ To further optimise the search algorith, several other optimisations have been u
 
 The candidate list keeps going as the game progresses and currently no pruning is done to remove older candidates that may or may not be very relevant during later stages of the game. The major downside is that it can limit search depth quite a bit.
 
+I believe the values of patterns could be adjusted to improve the intelligence of the AI. However, this would require extensive fine-tuning and testing against other AI implementations to verify the results.
+
 The string pattern matching method for computing the move value heuristic is quite slow, which makes it difficult to increase search depth.
 A better way would be to count the amount of markers on a row by row basis and compute the heuristic based on that.
 
@@ -41,7 +43,7 @@ The game board can be stored is a bitboard instead of a 2d list. This enables mu
 
 ## AI usage
 
-I have used Google Gemini Pro 2.5 and 3 for learning about concepts related to algorithm, such as:
+I have used Google Gemini Pro 2.5 and 3 for learning about concepts related to the minimax algorithm, such as:
 - Alpha-beta pruning
 - Transposition tables
 - Iterative deepening
