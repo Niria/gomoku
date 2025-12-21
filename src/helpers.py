@@ -1,6 +1,6 @@
 from random import getrandbits
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 
 def generate_zobrist_table(size):

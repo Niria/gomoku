@@ -21,7 +21,10 @@ class GomokuAI:
 
     def find_ai_move(self, gameboard: GameBoard, candidates: set[Move], turn_time_limit=10.0) -> Move:
         """
-        Initiates the minimax with alpha-beta pruning
+        Initiates the minimax with alpha-beta pruning. The AI is always trying to maximize the
+        heuristic value of the board. Uses iterative deepening with a default
+        time limit of 10 seconds for computation. Returns the best move found before timeout
+        occurred.
         :param gameboard: Instance of GameBoard
         :param candidates: Set of candidate moves
         :param turn_time_limit: Time limit for the AI's turn
@@ -68,7 +71,8 @@ class GomokuAI:
                 candidates: set[Move], parent_value: int, depth: int, start_time: float,
                 turn_time_limit: float, root_depth: int | None=None) -> tuple[int, Move | None]:
         """
-        Minimax algorithm
+        Minimax algorithm with alpha-beta pruning that has been further optimized with improved
+        move ordering, a transposition table and null window search.
         :param gameboard: Instance of GameBoard
         :param alpha: The alpha value used in alpha-beta pruning
         :param beta: The beta value used in alpha-beta pruning

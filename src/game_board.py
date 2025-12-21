@@ -148,7 +148,7 @@ class GameBoard:
         :param marker: Player or AI marker
         :return: Heuristic value of the move
         """
-        rows = self.get_rows_containing_move(col, row)
+        rows = self.get_rows_that_contain_move(col, row)
 
         current_value = 0
         for r, _ in rows:
@@ -162,29 +162,40 @@ class GameBoard:
 
         return new_value - current_value
 
-    def get_rows_containing_move(self, col: int, row: int) -> list[tuple[list[int], int]]:
+    def get_rows_that_contain_move(self, col: int, row: int) -> list[tuple[list[int], int]]:
         """
-        Generates a list of rows that contain the move (col, row) and its index within the row.
-        :param col: Column of the board
-        :param row: Row of the board
-        :return: List of rows and the index of the move
+        Returns all the rows (horizontal, vertical, diagonal, reverse diagonal) that contain
+        the move (col, row).
+        :param col: Column of the move
+        :param row: Row of the movex
+        :return: List of tuples with row that contains the move (col, row) and its index.
         """
-        directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
         rows = []
+        size = self.size
+        board = self.board
 
-        for dx, dy in directions:
-            current_row = []
-            mv_index = 0
+        rows.append((board[row][:], col))
+        rows.append(([board[r][col] for r in range(size)], row))
 
-            for i in range(-5, 6):
-                if i == 0:
-                    mv_index = len(current_row)
-                c = col + i*dx
-                r = row + i*dy
-                if not self.valid_coordinate(c, r):
-                    continue
-                current_row.append(self.board[r][c])
-            rows.append((current_row, mv_index))
+        shift = row - col
+        if shift < 0:
+            diag = [board[r][r - shift] for r in range(size + shift)]
+            mv_idx = row
+        else:
+            diag = [board[r][r - shift] for r in range(shift, size)]
+            mv_idx = row - shift
+        rows.append((diag, mv_idx))
+
+        shift = row + col
+        if shift < size:
+            reverse_diag = [board[r][shift - r] for r in range(shift + 1)]
+            mv_idx = row
+        else:
+            start_r = shift - size + 1
+            reverse_diag = [board[r][shift - r] for r in range(start_r, size)]
+            mv_idx = row - start_r
+        rows.append((reverse_diag, mv_idx))
+
         return rows
 
     def get_row_value(self, row: list[int]) -> int:
@@ -193,7 +204,8 @@ class GameBoard:
         :param row: List of empty, player and AI markers
         :return: Heuristic value of the given row
         """
-        row = "".join(str(n) for n in row)
+        # row = "".join(str(n) for n in row)
+        row = "".join(map(str, row))
 
         if "11" not in row and "101" not in row and "22" not in row and "202" not in row:
             return 0

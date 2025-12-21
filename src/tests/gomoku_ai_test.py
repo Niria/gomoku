@@ -15,6 +15,11 @@ class TestGomokuAi(unittest.TestCase):
             self.gameboard.move(col, row, marker)
             self.gameboard.update_candidates(self.candidates, col, row)
 
+    def test_AI_starts_returns_center(self):
+        move = self.ai.find_ai_move(self.gameboard, self.candidates, 1)
+        center = self.gameboard.size // 2
+        self.assertEqual(move, (center, center))
+
     def test_AI_detects_horizontal_win(self):
         moves = [(5,5, Marker.AI), (6,5,Marker.AI), (7,5,Marker.AI), (8,5,Marker.AI)]
         self.setup_board(moves)
