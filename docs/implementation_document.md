@@ -51,7 +51,7 @@ I have used Google Gemini Pro 2.5 and 3 for learning about concepts related to t
 I have also used it for troubleshooting, and examining the AI behaviour during the execution of my program by analysing debug logs.
 I have not used AI written code.
 
-## Sources
+## References
 https://en.wikipedia.org/wiki/Gomoku
 <br>
 https://en.wikipedia.org/wiki/Minimax
